@@ -1,0 +1,63 @@
+services:
+  app:
+    build: 
+      context: .
+      target: development
+    container_name: node_app
+    ports:
+      - "${PORT:-3000}:3000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    depends_on:
+      database:
+        condition: service_healthy
+    env_file:
+      - .env  # ← CARREGA .env
+    environment:
+      - NODE_ENV=${NODE_ENV:-development}
+    command: npm run dev
+    stdin_open: true
+    tty: true
+    networks:
+      - app-network
+
+  database:
+    image: postgres:15-alpine
+    container_name: postgres_db
+    environment:
+      - POSTGRES_USER=${DB_USER:-dev}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-dev123}
+      - POSTGRES_DB=${DB_NAME:-myapp}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-dev} -d ${DB_NAME:-myapp}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_EMAIL:-admin@app.com}
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_PASSWORD:-admin123}
+    ports:
+      - "8080:80"
+    depends_on:
+      - database
+    networks:
+      - app-network
+
+volumes:
+  postgres_data:
+
+networks:
+  app-network:
+    driver: bridge
