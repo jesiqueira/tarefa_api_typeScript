@@ -24,7 +24,7 @@ interface UsuarioAttributes {
 
 // Atributos opcionais na criação (id, timestamps)
 // Usando 'type' para evitar o aviso do ESLint
-type UsuarioCreationAttributes = Optional<UsuarioAttributes, 'id' | 'createdAt' | 'updatedAt'>
+export type UsuarioCreationAttributes = Optional<UsuarioAttributes, 'id' | 'createdAt' | 'updatedAt'>
 
 // ----------------------------------------------------------------------
 // 2. Definição da Classe do Modelo
@@ -32,14 +32,12 @@ type UsuarioCreationAttributes = Optional<UsuarioAttributes, 'id' | 'createdAt' 
 // Implementa a interface para garantir que a classe e a interface sejam sincronizadas
 export class Usuario extends Model<UsuarioAttributes, UsuarioCreationAttributes> implements UsuarioAttributes {
   // Campos obrigatórios (definidos pela interface)
-  public id!: number
-  public nome!: string
-  public email!: string
-  public passwordHash!: string // Campo de hash de senha
-
-  // Timestamps (injetados pelo Sequelize, mas tipados aqui)
-  public readonly createdAt!: Date
-  public readonly updatedAt!: Date
+  declare id: number
+  declare nome: string
+  declare email: string
+  declare passwordHash: string
+  declare readonly createdAt: Date
+  declare readonly updatedAt: Date
 
   // Método estático para inicializar o Model
   public static initModel(sequelize: Sequelize): void {

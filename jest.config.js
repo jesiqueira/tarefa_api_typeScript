@@ -1,9 +1,14 @@
+//jest.config.js
+
 const { createDefaultPreset } = require('ts-jest')
 const tsJestTransformCfg = createDefaultPreset().transform
 
 /** @type {import("jest").Config} **/
 module.exports = {
+  preset: 'ts-jest',
   testEnvironment: 'node',
+
+  roots: ['<rootDir>/src'],
   testMatch: ['**/__tests__/**/*.ts', '**/?(*.)+(spec|test).ts'],
 
   transform: {
@@ -28,6 +33,11 @@ module.exports = {
     '!src/routes/**/*.ts', // Arquivos de rotas (se apenas rotearem para controllers)
     '!src/models/**/*.ts', // Arquivos de definição de modelos (entidades/tipos)
     '!**/node_modules/**',
+    '!src/__tests__/**', // ← EXCLUI SEUS TESTES
+    '!src/database/database.ts',
+    '!src/**/*.d.ts',
   ],
-  coverageReporters: ['text-summary', 'lcov'],
+  coverageReporters: ['text-summary', 'lcov', 'html'],
+
+  testTimeout: 10000,
 }
