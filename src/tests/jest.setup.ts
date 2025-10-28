@@ -14,4 +14,4 @@ process.env.NODE_ENV = 'test'
 jest.setTimeout(10000) // 10 segundos
 
 // Configurações iniciais - SEM funções do Jest aqui
-console.log('🔧 Ambiente de teste configurado')
+// console.log('🔧 Ambiente de teste configurado')
