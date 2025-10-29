@@ -29,7 +29,7 @@ interface TarefaAttributes {
 }
 
 // Atributos opcionais na criação (id, timestamps)
-type TarefaCreationAttributes = Optional<TarefaAttributes, 'id' | 'createdAt' | 'updatedAt' | 'descricao'>
+export type TarefaCreationAttributes = Optional<TarefaAttributes, 'id' | 'createdAt' | 'updatedAt' | 'descricao'>
 
 // ----------------------------------------------------------------------
 // 3. Definição da Classe do Modelo
@@ -87,9 +87,9 @@ export class Tarefa extends Model<TarefaAttributes, TarefaCreationAttributes> im
    * Define as associações do Model, após todos os Models terem sido inicializados.
    * Geralmente é usado para definir relacionamentos BelongsTo, HasMany, etc.
    */
-  public static associate({ User }: Record<string, ModelStatic<Model>>): void {
-    if (User) {
-      Tarefa.belongsTo(User, { foreignKey: 'usuarioId', as: 'user' })
+  public static associate({ Usuario }: Record<string, ModelStatic<Model>>): void {
+    if (Usuario) {
+      Tarefa.belongsTo(Usuario, { foreignKey: 'usuarioId', as: 'usuario' })
     }
   }
 }
