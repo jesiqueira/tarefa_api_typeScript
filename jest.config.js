@@ -19,6 +19,9 @@ module.exports = {
   setupFiles: ['<rootDir>/src/tests/jest.setup.ts'], // 👈 AQUI
   setupFilesAfterEnv: ['<rootDir>/src/tests/setupDatabase.ts'],
 
+  // ✅ Configure para mostrar describes
+  verbose: true,
+
   collectCoverage: true,
   coverageDirectory: 'coverage',
   collectCoverageFrom: [

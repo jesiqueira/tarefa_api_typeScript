@@ -4,11 +4,17 @@
  */
 import dotenv from 'dotenv'
 
-// Garante que variáveis do .env sejam carregadas
-dotenv.config()
+// Configura dotenv SEM logs
+dotenv.config({
+  quiet: true, // ✅ Isso desabilita os logs do dotenv
+})
 
 // Força o ambiente de teste
 process.env.NODE_ENV = 'test'
+
+console.log = jest.fn() // ✅ Silencia todos os console.log
+console.warn = jest.fn() // ✅ Silencia warnings
+console.error = jest.fn() // ✅ Mantém errors ou silencia se quiser
 
 // Configurações globais do Jest
 jest.setTimeout(10000) // 10 segundos
