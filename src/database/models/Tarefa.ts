@@ -66,6 +66,12 @@ export class Tarefa extends Model<TarefaAttributes, TarefaCreationAttributes> im
         status: {
           type: 'tarefa_status_enum',
           defaultValue: 'pendente',
+          validate: {
+            isIn: {
+              args: [TAREFA_STATUS_VALUES],
+              msg: 'Status deve ser: pendente, em_andamento ou concluida',
+            },
+          },
         },
         usuarioId: {
           // O tipo é definido aqui. A restrição FK é adicionada na migration.
