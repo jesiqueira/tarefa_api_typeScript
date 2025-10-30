@@ -29,22 +29,22 @@ interface TarefaAttributes {
 }
 
 // Atributos opcionais na criação (id, timestamps)
-export type TarefaCreationAttributes = Optional<TarefaAttributes, 'id' | 'createdAt' | 'updatedAt' | 'descricao'>
+export type TarefaCreationAttributes = Optional<TarefaAttributes, 'id' | 'createdAt' | 'updatedAt' | 'descricao' | 'status'>
 
 // ----------------------------------------------------------------------
 // 3. Definição da Classe do Modelo
 // ----------------------------------------------------------------------
 export class Tarefa extends Model<TarefaAttributes, TarefaCreationAttributes> implements TarefaAttributes {
   // Campos obrigatórios (definidos pela interface)
-  public id!: number
-  public titulo!: string
-  public descricao!: string | null
-  public status!: TarefaStatus
-  public usuarioId!: number
+  declare id: number
+  declare titulo: string
+  declare descricao: string | null
+  declare status: TarefaStatus
+  declare usuarioId: number
 
   // Timestamps
-  public readonly createdAt!: Date
-  public readonly updatedAt!: Date
+  declare readonly createdAt: Date
+  declare readonly updatedAt: Date
 
   // Método estático para inicializar o Model
   public static initModel(sequelize: Sequelize): void {
