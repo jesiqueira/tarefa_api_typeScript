@@ -4,7 +4,7 @@
  */
 import { Usuario } from '../../database/models/Usuario'
 import type { UsuarioCreationAttributes } from '../../database/models/Usuario'
-import { Model, ModelStatic } from 'sequelize'
+import type { Model, ModelStatic } from 'sequelize'
 
 // ----------------------------------------------------------------------
 // Tipos parciais para testes de validação
