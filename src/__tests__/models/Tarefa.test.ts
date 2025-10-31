@@ -7,6 +7,7 @@ import { Tarefa, TAREFA_TABLE_NAME, TAREFA_STATUS_VALUES } from '../../database/
 import { Usuario } from '../../database/models/Usuario'
 import type { TarefaCreationAttributes } from '../../database/models/Tarefa'
 import type { UsuarioCreationAttributes } from '../../database/models/Usuario'
+import type { Model, ModelStatic } from 'sequelize'
 
 // ----------------------------------------------------------------------
 // TIPOS PARA TESTES DO MODEL - TYPE SAFE
@@ -504,6 +505,24 @@ describe('Tarefa Model', () => {
 
       // 🟣 ASSERT
       expect(tarefa.createdAt.getTime()).toBe(originalCreatedAt.getTime())
+    })
+  })
+
+  // --------------------------------------------------------------------
+  // TESTES DE COBERTURA DE BRANCHES DO associate (VERSÃO FINAL)
+  // --------------------------------------------------------------------
+
+  describe('Cobertura do Branch de Associação (Tarefa)', () => {
+    test('deve garantir que o método associate não falhe quando Usuario é omitido (Caminho FALSE)', () => {
+      // 🟢 ARRANGE
+      // Tipagem Linter-Safe:
+      // Criamos um objeto vazio que atende ao Record<string, ModelStatic<Model>>.
+      // O 'as' é necessário para convencer o TS de que a forma do objeto é válida.
+      const emptyModels: Record<string, ModelStatic<Model>> = {} as Record<string, ModelStatic<Model>>
+
+      // 🔵 ACT & 🟣 ASSERT
+      // Isso executa o if (Usuario) como FALSE, cobrindo o branch faltante.
+      expect(() => Tarefa.associate(emptyModels)).not.toThrow()
     })
   })
 })

@@ -4,6 +4,7 @@
  */
 import { Usuario } from '../../database/models/Usuario'
 import type { UsuarioCreationAttributes } from '../../database/models/Usuario'
+import { Model, ModelStatic } from 'sequelize'
 
 // ----------------------------------------------------------------------
 // Tipos parciais para testes de validação
@@ -243,5 +244,21 @@ describe('Usuario Model', () => {
     expect(usuarioJson.email).toBe('json@email.com')
     expect(usuarioJson.passwordHash).toBe('hash_json')
     expect(usuarioJson.id).toBeDefined()
+  })
+  // --------------------------------------------------------------------
+  // TESTE DE COBERTURA DE BRANCHES (Associate) - VERSÃO LINTER-SAFE
+  // --------------------------------------------------------------------
+  describe('Cobertura do Branch de Associação (Usuario)', () => {
+    test('deve garantir que o método associate não falhe quando Tarefa é omitida (Caminho FALSE)', () => {
+      // 🟢 ARRANGE
+      // Cria um objeto de Models VAZIO.
+      // Usamos o tipo genérico 'Model' do Sequelize como o tipo do valor,
+      // o que o seu linter deve aceitar.
+      const emptyModels: Record<string, ModelStatic<Model>> = {} as Record<string, ModelStatic<Model>>
+
+      // 🔵 ACT & 🟣 ASSERT
+      // Chamada direta do método associate
+      expect(() => Usuario.associate(emptyModels)).not.toThrow()
+    })
   })
 })
