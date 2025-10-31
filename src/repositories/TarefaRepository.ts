@@ -23,23 +23,36 @@ export class TarefaRepository implements ITarefaRepository {
   }
 
   async findByStatus(status: string): Promise<Tarefa[]> {
-    throw new Error('Method not implemented.')
+    return await this.model.findAll({ where: { status } })
   }
 
   async findAll(): Promise<Tarefa[]> {
-    throw new Error('Method not implemented.')
+    return await this.model.findAll()
   }
 
   async create(tarefaData: TarefaCreationAttributes): Promise<Tarefa> {
-    throw new Error('Method not implemented.')
+    return await this.model.create(tarefaData)
   }
 
   async update(id: number, tarefaData: Partial<TarefaCreationAttributes>): Promise<Tarefa | null> {
-    throw new Error('Method not implemented.')
+    const tarefa = await this.findById(id)
+
+    if (!tarefa) {
+      return null
+    }
+
+    return await tarefa.update(tarefaData)
   }
 
   async delete(id: number): Promise<boolean> {
-    throw new Error('Method not implemented.')
+    const tarefa = await this.findById(id)
+
+    if (!tarefa) {
+      return false
+    }
+
+    await tarefa.destroy()
+    return true
   }
 }
 
