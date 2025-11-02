@@ -30,7 +30,7 @@ export interface IUsuarioService {
   /**
    * Atualizar um usuário existente
    */
-  atualizarUsuario(id: number, usuarioData: Partial<UsuarioCreationAttributes>): Promise<Usuario | null>
+  atualizarUsuario(id: number, usuarioData: Partial<UsuarioCreationAttributes>): Promise<Usuario>
 
   /**
    * Deletar um usuário

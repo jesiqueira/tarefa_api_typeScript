@@ -200,6 +200,212 @@ describe('UsuariosService', () => {
         expect(usuarioAtualizado?.nome).toBe('Nome atualizado')
         expect(usuarioAtualizado?.email).toBe('original@email.com')
       })
+
+      test('deve atualizar múltiplios campos', async () => {
+        // Arrange
+        const usuario = await Usuario.create({
+          nome: 'Nome Original',
+          email: 'original@email.com',
+          passwordHash: 'hash_original',
+        })
+
+        // Act
+        const usuarioAtualizado = await usuarioService.atualizarUsuario(usuario.id, {
+          nome: 'Nome novo',
+          passwordHash: 'hash_novo',
+        })
+
+        // Assert
+        expect(usuarioAtualizado?.nome).toBe('Nome novo')
+        expect(usuarioAtualizado?.email).toBe('original@email.com')
+        expect(usuarioAtualizado?.passwordHash).toBe('hash_novo')
+      })
+
+      test('deve lancar erro ao tentar atualizar usuario inexistente', async () => {
+        // Atc & Assert
+        await expect(usuarioService.atualizarUsuario(9999, { nome: 'Inexistente' })).rejects.toThrow('Usuário não encontrado')
+      })
+
+      test('deve lancar erro ao tentar usar email de outro usuário', async () => {
+        // Arrange
+        const usuario1 = await Usuario.create({
+          nome: 'Usuário 1',
+          email: 'user1@email.com',
+          passwordHash: 'hash1',
+        })
+
+        await Usuario.create({
+          nome: 'Usuário 2',
+          email: 'user2@email.com',
+          passwordHash: 'hash2',
+        })
+
+        // Act & Assert
+        await expect(usuarioService.atualizarUsuario(usuario1.id, { email: 'user2@email.com' })).rejects.toThrow(
+          'Email já está em uso por outro usuário',
+        )
+      })
+
+      test('deve permitir atualizar quando email é o mesmo do usuário', async () => {
+        // Arrange
+        const usuario = await Usuario.create({
+          nome: 'Usuário teste',
+          email: 'teste@email.com',
+          passwordHash: 'hash_teste',
+        })
+
+        // Act - tenta atualiza para mesmo email
+        const usuarioAtualizado = await usuarioService.atualizarUsuario(usuario.id, { email: 'teste@email.com' })
+
+        // Assert - deve permitir é o mesmo email
+        expect(usuarioAtualizado).toBeDefined()
+        expect(usuarioAtualizado?.email).toBe('teste@email.com')
+      })
+    })
+    describe('deletarUsuario', () => {
+      test('deletar usuario existente', async () => {
+        // Arrange
+        const usuario = await Usuario.create({
+          nome: 'Usuário para Deletar',
+          email: 'deletar@email.com',
+          passwordHash: 'hash_delete',
+        })
+
+        //Act
+        const resultado = await usuarioService.deletarUsuario(usuario.id)
+
+        // Assert
+        expect(resultado).toBe(true)
+
+        // verificar que realmente foi excluído
+        const usuarioDeletado = await usuarioService.buscarPorId(usuario.id)
+        expect(usuarioDeletado).toBeNull()
+      })
+
+      test('deve lancar erro ao tentar usuário inexistente', async () => {
+        // Act & Assert
+        await expect(usuarioService.deletarUsuario(99999)).rejects.toThrow('Usuário não encontrado')
+      })
+    })
+  })
+
+  // --------------------------------------------------------------------
+  // DESCRIBE ANINHADO: Cenários Especiais
+  // --------------------------------------------------------------------
+  describe('cenários especiais', () => {
+    describe('com banco vazio', () => {
+      test('listarUsuarios deve retornar array vazio', async () => {
+        const usuarios = await usuarioService.listarUsuarios()
+        expect(usuarios).toHaveLength(0)
+      })
+
+      test('buscarPorEmail deve retornar null para qualquer email', async () => {
+        const usuario = await usuarioService.buscarPorEmail('qualquer@email.com')
+        expect(usuario).toBeNull()
+      })
+
+      test('buscarPorId deve retornar null para qualquer ID', async () => {
+        const usuario = await usuarioService.buscarPorId(1)
+        expect(usuario).toBeNull()
+      })
+
+      test('deve lançar erro ao tentar deletar usuário inexistente', async () => {
+        await expect(usuarioService.deletarUsuario(1)).rejects.toThrow('Usuário não encontrado')
+      })
+    })
+
+    describe('com múltiplos usuários', () => {
+      beforeEach(async () => {
+        await Usuario.bulkCreate([
+          { nome: 'Usuário A', email: 'a@email.com', passwordHash: 'hash_a' },
+          { nome: 'Usuário B', email: 'b@email.com', passwordHash: 'hash_b' },
+          { nome: 'Usuário C', email: 'c@email.com', passwordHash: 'hash_c' },
+        ])
+      })
+
+      test('listarUsuarios deve retornar todos os usuários', async () => {
+        const usuarios = await usuarioService.listarUsuarios()
+        expect(usuarios).toHaveLength(3)
+      })
+
+      test('deve conseguir buscar cada usuário individualmente', async () => {
+        const usuarioA = await usuarioService.buscarPorEmail('a@email.com')
+        const usuarioB = await usuarioService.buscarPorEmail('b@email.com')
+        const usuarioC = await usuarioService.buscarPorEmail('c@email.com')
+
+        expect(usuarioA?.nome).toBe('Usuário A')
+        expect(usuarioB?.nome).toBe('Usuário B')
+        expect(usuarioC?.nome).toBe('Usuário C')
+      })
+    })
+  })
+
+  // --------------------------------------------------------------------
+  // DESCRIBE ANINHADO: Testes de Integração Completa
+  // --------------------------------------------------------------------
+  describe('integração entre métodos', () => {
+    test('deve criar, buscar, atualizar e deletar um usuário', async () => {
+      // Create
+      const usuarioCriado = await usuarioService.criarUsuario({
+        nome: 'Usuário Completo',
+        email: 'completo@email.com',
+        passwordHash: 'hash_completo',
+      })
+
+      // Find
+      const usuarioEncontrado = await usuarioService.buscarPorId(usuarioCriado.id)
+      expect(usuarioEncontrado?.email).toBe('completo@email.com')
+
+      // Update
+      const usuarioAtualizado = await usuarioService.atualizarUsuario(usuarioCriado.id, {
+        nome: 'Usuário Atualizado',
+      })
+      expect(usuarioAtualizado?.nome).toBe('Usuário Atualizado')
+
+      // Delete
+      const deletado = await usuarioService.deletarUsuario(usuarioCriado.id)
+      expect(deletado).toBe(true)
+
+      // Verify
+      const usuarioDeletado = await usuarioService.buscarPorId(usuarioCriado.id)
+      expect(usuarioDeletado).toBeNull()
+    })
+
+    test('fluxo completo com validações de negócio', async () => {
+      // Cria primeiro usuário
+      const usuario1 = await usuarioService.criarUsuario({
+        nome: 'Primeiro Usuário',
+        email: 'primeiro@email.com',
+        passwordHash: 'hash1',
+      })
+
+      // Tenta criar segundo com mesmo email - deve falhar
+      await expect(
+        usuarioService.criarUsuario({
+          nome: 'Segundo Usuário',
+          email: 'primeiro@email.com',
+          passwordHash: 'hash2',
+        }),
+      ).rejects.toThrow('Usuário já existe com este email')
+
+      // Cria segundo usuário com email diferente
+      const usuario2 = await usuarioService.criarUsuario({
+        nome: 'Segundo Usuário',
+        email: 'segundo@email.com',
+        passwordHash: 'hash2',
+      })
+
+      // Tenta atualizar email do usuário1 para email do usuário2 - deve falhar
+      await expect(usuarioService.atualizarUsuario(usuario1.id, { email: 'segundo@email.com' })).rejects.toThrow(
+        'Email já está em uso por outro usuário',
+      )
+
+      // Deleta usuário1
+      await usuarioService.deletarUsuario(usuario1.id)
+
+      // Verifica que usuário1 foi deletado mas usuário2 ainda existe
+      expect(await usuarioService.buscarPorId(usuario1.id)).toBeNull()
+      expect(await usuarioService.buscarPorId(usuario2.id)).not.toBeNull()
     })
   })
 })
