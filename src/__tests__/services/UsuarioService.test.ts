@@ -8,6 +8,8 @@ import { UsuarioRepository } from '../../repositories/UsuarioRepository'
 import { UsuarioService } from '../../services/UsuarioService'
 import type { UsuarioCreationAttributes } from '../../database/models/Usuario'
 
+import { UsuarioNaoEncontradoError, EmailEmUsoError } from '../../errors'
+
 describe('UsuariosService', () => {
   let usuarioService: UsuarioService
   let usuarioRepository: UsuarioRepository
@@ -223,7 +225,7 @@ describe('UsuariosService', () => {
 
       test('deve lancar erro ao tentar atualizar usuario inexistente', async () => {
         // Atc & Assert
-        await expect(usuarioService.atualizarUsuario(9999, { nome: 'Inexistente' })).rejects.toThrow('Usuário não encontrado')
+        await expect(usuarioService.atualizarUsuario(9999, { nome: 'Inexistente' })).rejects.toThrow(UsuarioNaoEncontradoError)
       })
 
       test('deve lancar erro ao tentar usar email de outro usuário', async () => {
@@ -241,9 +243,7 @@ describe('UsuariosService', () => {
         })
 
         // Act & Assert
-        await expect(usuarioService.atualizarUsuario(usuario1.id, { email: 'user2@email.com' })).rejects.toThrow(
-          'Email já está em uso por outro usuário',
-        )
+        await expect(usuarioService.atualizarUsuario(usuario1.id, { email: 'user2@email.com' })).rejects.toThrow(EmailEmUsoError)
       })
 
       test('deve permitir atualizar quando email é o mesmo do usuário', async () => {
@@ -261,7 +261,32 @@ describe('UsuariosService', () => {
         expect(usuarioAtualizado).toBeDefined()
         expect(usuarioAtualizado?.email).toBe('teste@email.com')
       })
+
+      describe('atualizarUsuario - cenários de retorno null', () => {
+        test('deve lançar erro quando update retorna null (race condition)', async () => {
+          // Arrange
+          const usuario = await Usuario.create({
+            nome: 'Usuário Teste',
+            email: 'teste@email.com',
+            passwordHash: 'hash123',
+          })
+
+          // Simula uma race condition: usuário existe no findById mas foi deletado antes do update
+          const originalUpdate = usuarioRepository.update
+          usuarioRepository.update = async (): Promise<Usuario | null> => {
+            // Simula que o usuário foi deletado entre o findById e o update
+            return null
+          }
+
+          // Act & Assert
+          await expect(usuarioService.atualizarUsuario(usuario.id, { nome: 'Novo Nome' })).rejects.toThrow('Erro ao atualizar usuário')
+
+          // Restaura
+          usuarioRepository.update = originalUpdate
+        })
+      })
     })
+
     describe('deletarUsuario', () => {
       test('deletar usuario existente', async () => {
         // Arrange
@@ -386,7 +411,7 @@ describe('UsuariosService', () => {
           email: 'primeiro@email.com',
           passwordHash: 'hash2',
         }),
-      ).rejects.toThrow('Usuário já existe com este email')
+      ).rejects.toThrow(EmailEmUsoError)
 
       // Cria segundo usuário com email diferente
       const usuario2 = await usuarioService.criarUsuario({
@@ -396,9 +421,7 @@ describe('UsuariosService', () => {
       })
 
       // Tenta atualizar email do usuário1 para email do usuário2 - deve falhar
-      await expect(usuarioService.atualizarUsuario(usuario1.id, { email: 'segundo@email.com' })).rejects.toThrow(
-        'Email já está em uso por outro usuário',
-      )
+      await expect(usuarioService.atualizarUsuario(usuario1.id, { email: 'segundo@email.com' })).rejects.toThrow(EmailEmUsoError)
 
       // Deleta usuário1
       await usuarioService.deletarUsuario(usuario1.id)

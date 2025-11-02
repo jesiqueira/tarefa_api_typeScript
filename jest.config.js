@@ -29,6 +29,7 @@ module.exports = {
 
     // EXCLUSÕES (Ajuste ou adicione o que não é lógica de negócio/teste)
     '!src/server.ts', // Inicialização do servidor (apenas bootstrap)
+    '!src/errors/**/*.ts', // IGNORA erros
     '!src/app.ts', // Definição da instância Express (sem lógica)
     '!src/database/config.ts', // Configurações do DB (sem lógica de execução)
     '!src/database/connection.ts', // Inicialização da conexão (sem lógica)

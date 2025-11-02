@@ -8,6 +8,8 @@ import type { IUsuarioRepository } from '../repositories/interfaces/IUsuarioRepo
 import type { Usuario } from '../database/models/Usuario'
 import type { UsuarioCreationAttributes } from '../database/models/Usuario'
 
+import { UsuarioNaoEncontradoError, EmailEmUsoError } from '../errors'
+
 export class UsuarioService implements IUsuarioService {
   private usuarioRepository: IUsuarioRepository
 
@@ -31,7 +33,7 @@ export class UsuarioService implements IUsuarioService {
     const usuarioExistente = await this.usuarioRepository.findByEmail(usuarioData.email)
 
     if (usuarioExistente) {
-      throw new Error('Usuário já existe com este email')
+      throw new EmailEmUsoError()
     }
     return await this.usuarioRepository.create(usuarioData)
   }
@@ -40,14 +42,14 @@ export class UsuarioService implements IUsuarioService {
     // Verifica se usuário existe
     const usuarioExistente = await this.usuarioRepository.findById(id)
     if (!usuarioExistente) {
-      throw new Error('Usuário não encontrado')
+      throw new UsuarioNaoEncontradoError()
     }
 
     // Se estiver tentando atualizar email, verifica se não pertence a outro usuário
     if (usuarioData.email && usuarioData.email !== usuarioExistente.email) {
       const usuarioComEmail = await this.usuarioRepository.findByEmail(usuarioData.email)
       if (usuarioComEmail && usuarioComEmail.id !== id) {
-        throw new Error('Email já está em uso por outro usuário')
+        throw new EmailEmUsoError()
       }
     }
 
@@ -64,7 +66,7 @@ export class UsuarioService implements IUsuarioService {
     const usuarioExistente = await this.usuarioRepository.findById(id)
 
     if (!usuarioExistente) {
-      throw new Error('Usuário não encontrado')
+      throw new UsuarioNaoEncontradoError()
     }
 
     return await this.usuarioRepository.delete(id)
