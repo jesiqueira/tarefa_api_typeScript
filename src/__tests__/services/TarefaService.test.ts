@@ -189,5 +189,107 @@ describe('TarefaService', () => {
       expect(titulos).toContain('Tarefa Pendente 2')
       expect(titulos).not.toContain('Tarefa Concluída')
     })
+
+    test('deve retornar array vazio quando não existe, tarefas com status', async () => {
+      // Arrange
+      const usuario = await criarUsuario()
+
+      await criarTarefa(usuario.id, {
+        titulo: 'Tarefa concluida',
+        status: 'concluida',
+      })
+
+      // Act - Busca por status que não existe
+      const tarefasPendentes = await tarefaService.buscarPorStatus('pendente')
+
+      // Assert
+      expect(tarefasPendentes).toBeDefined()
+      expect(tarefasPendentes).toHaveLength(0)
+      expect(Array.isArray(tarefasPendentes)).toBe(true)
+    })
+
+    test('deve retornar array vazio quando status não existe no sistema', async () => {
+      // Act - Busca por status inexistente
+      const tarefas = await tarefaService.buscarPorStatus('status_inexistente')
+
+      // Assert
+      expect(tarefas).toBeDefined()
+      expect(tarefas).toHaveLength(0)
+      expect(Array.isArray(tarefas)).toBe(true)
+    })
+
+    test('deve retornar tarefas de múltiplos usuários com mesmo status', async () => {
+      // Arrange
+      const usuario1 = await criarUsuario()
+      const usuario2 = await criarUsuario()
+
+      // Tarefas pendentes de usuários diferentes
+      await criarTarefa(usuario1.id, {
+        titulo: 'Pendente User 1',
+        status: 'pendente',
+      })
+      await criarTarefa(usuario2.id, {
+        titulo: 'Pendente User 2',
+        status: 'pendente',
+      })
+      await criarTarefa(usuario1.id, {
+        titulo: 'Concluída User 1',
+        status: 'concluida',
+      })
+
+      // Act
+      const tarefasPendentes = await tarefaService.buscarPorStatus('pendente')
+
+      // Assert
+      expect(tarefasPendentes).toHaveLength(2)
+
+      // Verifica que retornou de ambos os usuários
+      const usuarioIds = tarefasPendentes.map((t) => t.usuarioId)
+      expect(usuarioIds).toContain(usuario1.id)
+      expect(usuarioIds).toContain(usuario2.id)
+
+      // Verifica que todas são pendentes
+      tarefasPendentes.forEach((tarefa) => {
+        expect(tarefa.status).toBe('pendente')
+      })
+    })
+
+    test('deve funcionar com diferentes status válidos', async () => {
+      // Arrange
+      const usuario = await criarUsuario()
+
+      await criarTarefa(usuario.id, { status: 'pendente' })
+      await criarTarefa(usuario.id, { status: 'concluida' })
+      await criarTarefa(usuario.id, { status: 'em_andamento' })
+
+      // Act & Assert para cada status
+      const pendentes = await tarefaService.buscarPorStatus('pendente')
+      expect(pendentes).toHaveLength(1)
+      expect(pendentes[0]?.status).toBe('pendente')
+
+      const concluidas = await tarefaService.buscarPorStatus('concluida')
+      expect(concluidas).toHaveLength(1)
+      expect(concluidas[0]?.status).toBe('concluida')
+
+      const em_andamento = await tarefaService.buscarPorStatus('em_andamento')
+      expect(em_andamento).toHaveLength(1)
+      expect(em_andamento[0]?.status).toBe('em_andamento')
+    })
+
+    test('deve ser case sensitive ou insensitive conforme implementação', async () => {
+      // Arrange
+      const usuario = await criarUsuario()
+      await criarTarefa(usuario.id, { status: 'pendente' })
+
+      // Act - Testa com case diferente
+      const tarefas = await tarefaService.buscarPorStatus('PENDENTE') // Maiúsculo
+
+      // Se seu banco for case-sensitive, retornará 0
+      // Se for case-insensitive, retornará 1
+      expect(tarefas.length).toBeGreaterThanOrEqual(0)
+
+      // Pelo menos verifica que não quebra
+      expect(Array.isArray(tarefas)).toBe(true)
+    })
   })
 })

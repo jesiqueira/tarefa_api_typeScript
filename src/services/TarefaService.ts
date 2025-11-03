@@ -24,7 +24,7 @@ export class TarefaService implements ITarefaService {
   }
 
   async buscarPorStatus(status: string): Promise<Tarefa[]> {
-    throw new Error('Method not implemented.')
+    return await this.tarefaRepository.findByStatus(status)
   }
 
   async listarTarefas(): Promise<Tarefa[]> {
