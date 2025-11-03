@@ -20,7 +20,7 @@ export class TarefaService implements ITarefaService {
   }
 
   async buscarPorUsuarioId(usuarioId: number): Promise<Tarefa[]> {
-    throw new Error('Method not implemented.')
+    return await this.tarefaRepository.findByUsuarioId(usuarioId)
   }
 
   async buscarPorStatus(status: string): Promise<Tarefa[]> {
