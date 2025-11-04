@@ -4,10 +4,14 @@
  */
 
 import { Tarefa } from '../../database/models/Tarefa'
-import { criarUsuario } from '../factories/UsuarioFactory'
-import { criarTarefa } from '../factories/TarefaFactory'
+import type { TarefaCreationAttributes } from '../../database/models/Tarefa'
+import { criarUsuario } from '../../factories/UsuarioFactory'
+import { criarTarefa } from '../../factories/TarefaFactory'
 import { TarefaRepository } from '../../repositories/TarefaRepository'
 import { TarefaService } from '../../services/TarefaService'
+
+import { TarefaNaoEncontradaError, TarefaDadosInvalidosError } from '../../errors'
+import type { ITarefaRepository } from '../../repositories/interfaces/ITarefaRepository'
 
 describe('TarefaService', () => {
   let tarefaService: TarefaService
@@ -209,13 +213,8 @@ describe('TarefaService', () => {
     })
 
     test('deve retornar array vazio quando status não existe no sistema', async () => {
-      // Act - Busca por status inexistente
-      const tarefas = await tarefaService.buscarPorStatus('status_inexistente')
-
-      // Assert
-      expect(tarefas).toBeDefined()
-      expect(tarefas).toHaveLength(0)
-      expect(Array.isArray(tarefas)).toBe(true)
+      // Act & Assert
+      await expect(tarefaService.buscarPorStatus('status_inexistente')).rejects.toThrow(TarefaDadosInvalidosError)
     })
 
     test('deve retornar tarefas de múltiplos usuários com mesmo status', async () => {
@@ -276,20 +275,496 @@ describe('TarefaService', () => {
       expect(em_andamento[0]?.status).toBe('em_andamento')
     })
 
-    test('deve ser case sensitive ou insensitive conforme implementação', async () => {
+    test('deve ser case insensitive na validação', async () => {
       // Arrange
       const usuario = await criarUsuario()
       await criarTarefa(usuario.id, { status: 'pendente' })
 
-      // Act - Testa com case diferente
+      // Act - Testa com case diferente (deve passar na validação)
       const tarefas = await tarefaService.buscarPorStatus('PENDENTE') // Maiúsculo
 
-      // Se seu banco for case-sensitive, retornará 0
-      // Se for case-insensitive, retornará 1
+      // Assert - Depende do comportamento do seu banco
+      // Se banco for case-sensitive: length = 0
+      // Se banco for case-insensitive: length = 1
       expect(tarefas.length).toBeGreaterThanOrEqual(0)
-
-      // Pelo menos verifica que não quebra
       expect(Array.isArray(tarefas)).toBe(true)
+    })
+
+    test('deve validar status em buscarPorStatus', async () => {
+      await expect(tarefaService.buscarPorStatus('invalido')).rejects.toThrow(TarefaDadosInvalidosError)
+    })
+  })
+
+  describe('listarTarefas', () => {
+    test('deve retornar todas as tarefas quando existirem ', async () => {
+      // Arrange
+      const usuario1 = await criarUsuario()
+      const usuario2 = await criarUsuario()
+
+      await criarTarefa(usuario1.id, {
+        titulo: 'Tarefa 1',
+        status: 'pendente',
+      })
+      await criarTarefa(usuario1.id, {
+        titulo: 'Tarefa 2',
+        status: 'em_andamento',
+      })
+      await criarTarefa(usuario2.id, {
+        titulo: 'Tarefa 3',
+        status: 'concluida',
+      })
+
+      // Act
+      const tarefas = await tarefaService.listarTarefas()
+
+      // Assert
+
+      expect(tarefas).toBeDefined()
+      expect(tarefas).toHaveLength(3)
+      expect(Array.isArray(tarefas)).toBe(true)
+
+      // Verifica conteúdo sem depender da ordem
+      const titulos = tarefas.map((t) => t.titulo)
+      expect(titulos).toEqual(expect.arrayContaining(['Tarefa 1', 'Tarefa 2', 'Tarefa 3']))
+
+      // Verifica status
+      const statusList = tarefas.map((t) => t.status)
+      expect(statusList).toEqual(expect.arrayContaining(['pendente', 'em_andamento', 'concluida']))
+
+      // Verifica usuários
+      const usuarioIds = tarefas.map((t) => t.usuarioId)
+      expect(usuarioIds).toContain(usuario1.id)
+      expect(usuarioIds).toContain(usuario2.id)
+    })
+
+    test('deve retornar array vazio quando não existir tarefas', async () => {
+      // ACT
+
+      const tarefas = await tarefaService.listarTarefas()
+
+      //Assert
+
+      expect(tarefas).toBeDefined()
+      expect(tarefas).toHaveLength(0)
+      expect(Array.isArray(tarefas)).toBe(true)
+    })
+  })
+
+  // --------------------------------------------------------------------
+  // DESCRIBE ANINHADO: Métodos de Escrita
+  // --------------------------------------------------------------------
+
+  describe('Metodos de escrita', () => {
+    describe('criarTarefa', () => {
+      test('deve criar tarefa com dados validos ', async () => {
+        // Arrange
+        const usuario = await criarUsuario()
+
+        const dadosTarefa: TarefaCreationAttributes = {
+          titulo: 'Nova Tarefa',
+          descricao: 'Descrição da nova tarefa',
+          usuarioId: usuario.id,
+          status: 'pendente',
+        }
+
+        // Act
+        const tarefaCriada = await tarefaService.criarTarefa(dadosTarefa)
+
+        // Assert
+        expect(tarefaCriada).toBeDefined()
+        expect(tarefaCriada.id).toBeDefined()
+        expect(tarefaCriada.titulo).toBe('Nova Tarefa')
+        expect(tarefaCriada.descricao).toBe('Descrição da nova tarefa')
+        expect(tarefaCriada.usuarioId).toBe(usuario.id)
+        expect(tarefaCriada.status).toBe('pendente')
+        expect(tarefaCriada.createdAt).toBeDefined()
+        expect(tarefaCriada.updatedAt).toBeDefined()
+      })
+
+      test('deve criar tarefa com status padrão quando não informado', async () => {
+        // Arrange
+        const usuario = await criarUsuario()
+        const dadosTarefa = {
+          titulo: 'Tarefa sem status',
+          descricao: 'Descrição',
+          usuarioId: usuario.id,
+          // status não informado
+        }
+
+        // Act
+        const tarefaCriada = await tarefaService.criarTarefa(dadosTarefa)
+
+        // Assert
+        expect(tarefaCriada).toBeDefined()
+        expect(tarefaCriada.status).toBeDefined()
+        expect(tarefaCriada.status).toBe('pendente')
+      })
+
+      test('deve criar tarefa com campos opcionais em branco', async () => {
+        // Arrange
+        const usuario = await criarUsuario()
+        const dadosTarefa = {
+          titulo: 'Tarefa sem descrição',
+          usuarioId: usuario.id,
+          // descrição não informada
+        }
+
+        // Act
+        const tarefaCriada = await tarefaService.criarTarefa(dadosTarefa)
+
+        // Assert
+        expect(tarefaCriada).toBeDefined()
+        expect(tarefaCriada.titulo).toBe('Tarefa sem descrição')
+        expect(tarefaCriada.descricao).toBeUndefined()
+      })
+
+      test('deve falhar ao criar tarefa com usuarioId inválido', async () => {
+        // Arrange
+        const dadosTarefa = {
+          titulo: 'Tarefa com usuário inválido',
+          descricao: 'Descrição',
+          usuarioId: 99999, // usuário não existe
+        }
+
+        // Act & Assert
+        await expect(tarefaService.criarTarefa(dadosTarefa)).rejects.toThrow()
+      })
+
+      test('deve falhar ao criar tarefa sem título', async () => {
+        // Arrange
+        const usuario = await criarUsuario()
+        const dadosTarefa = {
+          descricao: 'Descrição sem título',
+          usuarioId: usuario.id,
+          // título não informado
+        }
+
+        // Act & Assert
+        await expect(tarefaService.criarTarefa(dadosTarefa as TarefaCreationAttributes)).rejects.toThrow() // Espera que lance erro de validação
+      })
+      test('deve falhar ao criar tarefa com título muito longo', async () => {
+        // Arrange
+        const usuario = await criarUsuario()
+        const tituloMuitoLongo = 'a'.repeat(256) // 256 caracteres - acima do limite
+
+        const dadosTarefa = {
+          titulo: tituloMuitoLongo,
+          descricao: 'Descrição válida',
+          usuarioId: usuario.id,
+        }
+
+        // Act & Assert
+        await expect(tarefaService.criarTarefa(dadosTarefa)).rejects.toThrow(TarefaDadosInvalidosError)
+
+        await expect(tarefaService.criarTarefa(dadosTarefa)).rejects.toThrow('Título muito longo')
+      })
+
+      test('deve permitir criar tarefa com título no limite máximo', async () => {
+        // Arrange
+        const usuario = await criarUsuario()
+        const tituloNoLimite = 'a'.repeat(255) // 255 caracteres - no limite
+
+        const dadosTarefa = {
+          titulo: tituloNoLimite,
+          descricao: 'Descrição válida',
+          usuarioId: usuario.id,
+        }
+
+        // Act
+        const tarefaCriada = await tarefaService.criarTarefa(dadosTarefa)
+
+        // Assert
+        expect(tarefaCriada).toBeDefined()
+        expect(tarefaCriada.titulo).toBe(tituloNoLimite)
+        expect(tarefaCriada.titulo.length).toBe(255)
+      })
+    })
+
+    describe('atualizarTarefa', () => {
+      test('deve atualizar tarefa existente com dados válidos', async () => {
+        // Arrange
+        const usuario = await criarUsuario()
+        const tarefa = await criarTarefa(usuario.id, {
+          titulo: 'Tarefa Original',
+          descricao: 'Descrição original',
+          status: 'pendente',
+        })
+
+        const dadosAtualizacao = {
+          titulo: 'Tarefa Atualizada',
+          descricao: 'Nova descrição',
+          status: 'concluida' as const,
+        }
+
+        // Act
+        const tarefaAtualizada = await tarefaService.atualizarTarefa(tarefa.id, dadosAtualizacao)
+
+        // Assert
+        expect(tarefaAtualizada).toBeDefined()
+        expect(tarefaAtualizada?.id).toBe(tarefa.id)
+        expect(tarefaAtualizada?.titulo).toBe('Tarefa Atualizada')
+        expect(tarefaAtualizada?.descricao).toBe('Nova descrição')
+        expect(tarefaAtualizada?.status).toBe('concluida')
+        expect(tarefaAtualizada?.usuarioId).toBe(usuario.id) // Não deve mudar
+        expect(tarefaAtualizada?.updatedAt).not.toBe(tarefa.updatedAt) // Deve ser atualizado
+      })
+
+      test('deve atualizar apenas alguns campos', async () => {
+        // Arrange
+        const usuario = await criarUsuario()
+        const tarefa = await criarTarefa(usuario.id, {
+          titulo: 'Tarefa Original',
+          descricao: 'Descrição original',
+          status: 'pendente',
+        })
+
+        const dadosAtualizacao = {
+          status: 'em_andamento' as const,
+          // Apenas status foi atualizado
+        }
+
+        // Act
+        const tarefaAtualizada = await tarefaService.atualizarTarefa(tarefa.id, dadosAtualizacao)
+
+        // Assert
+        expect(tarefaAtualizada).toBeDefined()
+        expect(tarefaAtualizada?.titulo).toBe('Tarefa Original') // Manteve original
+        expect(tarefaAtualizada?.descricao).toBe('Descrição original') // Manteve original
+        expect(tarefaAtualizada?.status).toBe('em_andamento') // Apenas isso mudou
+        expect(tarefaAtualizada?.usuarioId).toBe(usuario.id) // Não mudou
+      })
+
+      test('deve lançar erro ao tentar atualizar tarefa inexistente', async () => {
+        // Arrange
+        const dadosAtualizacao = { titulo: 'Título Novo' }
+
+        // Act & Assert
+        await expect(tarefaService.atualizarTarefa(99999, dadosAtualizacao)).rejects.toThrow(TarefaNaoEncontradaError)
+      })
+
+      test('deve atualizar usuarioId quando fornecido (validação fica no controller)', async () => {
+        // Arrange
+        const usuarioOriginal = await criarUsuario()
+        const outroUsuario = await criarUsuario()
+        const tarefa = await criarTarefa(usuarioOriginal.id)
+
+        const dadosAtualizacao = {
+          usuarioId: outroUsuario.id, // Service permite, controller bloqueia
+          titulo: 'Novo Título',
+        }
+
+        // Act
+        const tarefaAtualizada = await tarefaService.atualizarTarefa(tarefa.id, dadosAtualizacao)
+
+        // Assert - Service não valida usuarioId
+        expect(tarefaAtualizada).toBeDefined()
+        expect(tarefaAtualizada.usuarioId).toBe(outroUsuario.id)
+      })
+
+      test('deve validar apenas dados de domínio necessários', async () => {
+        // Arrange
+        const usuario = await criarUsuario()
+        const tarefa = await criarTarefa(usuario.id)
+
+        // Act & Assert
+        await expect(tarefaService.atualizarTarefa(tarefa.id, { titulo: '' })).rejects.toThrow(TarefaDadosInvalidosError)
+      })
+
+      test('deve aceitar diferentes casos na validação', async () => {
+        // Testa que a validação aceita diferentes cases
+        await expect(tarefaService.buscarPorStatus('PENDENTE')).resolves.toBeDefined()
+        await expect(tarefaService.buscarPorStatus('Pendente')).resolves.toBeDefined()
+        await expect(tarefaService.buscarPorStatus('pendente')).resolves.toBeDefined()
+      })
+
+      test('deve falhar ao atualizar tarefa com título muito longo', async () => {
+        // Arrange
+        const usuario = await criarUsuario()
+        const tarefa = await criarTarefa(usuario.id)
+        const tituloMuitoLongo = 'a'.repeat(256) // 256 caracteres
+
+        const dadosAtualizacao = {
+          titulo: tituloMuitoLongo,
+        }
+
+        // Act & Assert
+        await expect(tarefaService.atualizarTarefa(tarefa.id, dadosAtualizacao)).rejects.toThrow(TarefaDadosInvalidosError)
+
+        await expect(tarefaService.atualizarTarefa(tarefa.id, dadosAtualizacao)).rejects.toThrow('Título muito longo')
+      })
+
+      test('deve permitir atualizar tarefa com título no limite máximo', async () => {
+        // Arrange
+        const usuario = await criarUsuario()
+        const tarefa = await criarTarefa(usuario.id)
+        const tituloNoLimite = 'a'.repeat(255) // 255 caracteres
+
+        const dadosAtualizacao = {
+          titulo: tituloNoLimite,
+        }
+
+        // Act
+        const tarefaAtualizada = await tarefaService.atualizarTarefa(tarefa.id, dadosAtualizacao)
+
+        // Assert
+        expect(tarefaAtualizada).toBeDefined()
+        expect(tarefaAtualizada.titulo).toBe(tituloNoLimite)
+        expect(tarefaAtualizada.titulo.length).toBe(255)
+      })
+
+      test('deve lançar erro interno quando repositório retorna null na atualização', async () => {
+        // Arrange
+        const usuario = await criarUsuario()
+        const tarefa = await criarTarefa(usuario.id, {
+          titulo: 'Tarefa Original',
+        })
+
+        const dadosAtualizacao = {
+          titulo: 'Tarefa Atualizada',
+        }
+
+        // Mock do repositório para simular erro interno
+        const mockTarefaRepository: jest.Mocked<ITarefaRepository> = {
+          findById: jest.fn().mockResolvedValue(tarefa),
+          update: jest.fn().mockResolvedValue(null), // ← Retorna null propositalmente
+          // ... outros métodos do repositório que seu service usa
+          findByUsuarioId: jest.fn(),
+          findByStatus: jest.fn(),
+          findAll: jest.fn(),
+          create: jest.fn(),
+          delete: jest.fn(),
+        }
+
+        const tarefaServiceComMock = new TarefaService(mockTarefaRepository)
+
+        // Act & Assert
+        await expect(tarefaServiceComMock.atualizarTarefa(tarefa.id, dadosAtualizacao)).rejects.toThrow('Erro interno ao atualizar tarefa')
+
+        // Verifica que o repositório foi chamado
+        expect(mockTarefaRepository.findById).toHaveBeenCalledWith(tarefa.id)
+        expect(mockTarefaRepository.update).toHaveBeenCalledWith(tarefa.id, dadosAtualizacao)
+      })
+    })
+
+    describe('deletarTarefa', () => {
+      test('deve deletar tarefa existente e retornar true', async () => {
+        // Arrange
+        const usuario = await criarUsuario()
+        const tarefa = await criarTarefa(usuario.id, {
+          titulo: 'Tarefa para deletar',
+        })
+
+        // Verifica que a tarefa existe antes de deletar
+        const tarefaAntes = await tarefaService.buscarPorId(tarefa.id)
+        expect(tarefaAntes).toBeDefined()
+
+        // Act
+        const resultado = await tarefaService.deletarTarefa(tarefa.id)
+
+        // Assert
+        expect(resultado).toBe(true)
+
+        // Verifica que realmente foi deletada
+        const tarefaDepois = await tarefaService.buscarPorId(tarefa.id)
+        expect(tarefaDepois).toBeNull()
+      })
+
+      test('deve lançar erro ao tentar deletar tarefa inexistente', async () => {
+        // Act & Assert
+        await expect(tarefaService.deletarTarefa(99999)).rejects.toThrow(TarefaNaoEncontradaError)
+      })
+
+      test('deve deletar tarefa e verificar que não aparece mais nas listagens', async () => {
+        // Arrange
+        const usuario = await criarUsuario()
+        const tarefa1 = await criarTarefa(usuario.id, { titulo: 'Tarefa 1' })
+        const tarefa2 = await criarTarefa(usuario.id, { titulo: 'Tarefa 2' })
+
+        // Verifica que ambas existem antes
+        const tarefasAntes = await tarefaService.listarTarefas()
+        expect(tarefasAntes).toHaveLength(2)
+
+        // Act - Deleta uma tarefa
+        const resultado = await tarefaService.deletarTarefa(tarefa1.id)
+
+        // Assert
+        expect(resultado).toBe(true)
+
+        // Verifica listagem geral
+        const tarefasDepois = await tarefaService.listarTarefas()
+        expect(tarefasDepois).toHaveLength(1)
+        expect(tarefasDepois[0]?.id).toBe(tarefa2.id)
+
+        // Verifica busca por usuário
+        const tarefasUsuario = await tarefaService.buscarPorUsuarioId(usuario.id)
+        expect(tarefasUsuario).toHaveLength(1)
+        expect(tarefasUsuario[0]?.id).toBe(tarefa2.id)
+      })
+
+      test('deve permitir deletar tarefa com diferentes status', async () => {
+        // Arrange
+        const usuario = await criarUsuario()
+        const tarefaPendente = await criarTarefa(usuario.id, {
+          titulo: 'Pendente',
+          status: 'pendente',
+        })
+        const tarefaConcluida = await criarTarefa(usuario.id, {
+          titulo: 'Concluída',
+          status: 'concluida',
+        })
+        const tarefaAndamento = await criarTarefa(usuario.id, {
+          titulo: 'Em Andamento',
+          status: 'em_andamento',
+        })
+
+        // Act & Assert - Deleta todas independente do status
+        await expect(tarefaService.deletarTarefa(tarefaPendente.id)).resolves.toBe(true)
+
+        await expect(tarefaService.deletarTarefa(tarefaConcluida.id)).resolves.toBe(true)
+
+        await expect(tarefaService.deletarTarefa(tarefaAndamento.id)).resolves.toBe(true)
+
+        // Verifica que todas foram deletadas
+        const tarefasRestantes = await tarefaService.listarTarefas()
+        expect(tarefasRestantes).toHaveLength(0)
+      })
+
+      test('deve deletar tarefa de usuário específico sem afetar outros usuários', async () => {
+        // Arrange
+        const usuario1 = await criarUsuario()
+        const usuario2 = await criarUsuario()
+
+        const tarefaUsuario1 = await criarTarefa(usuario1.id, { titulo: 'Tarefa User 1' })
+        const tarefaUsuario2 = await criarTarefa(usuario2.id, { titulo: 'Tarefa User 2' })
+
+        // Act - Deleta tarefa do usuário 1
+        const resultado = await tarefaService.deletarTarefa(tarefaUsuario1.id)
+
+        // Assert
+        expect(resultado).toBe(true)
+
+        // Verifica que usuário 1 não tem mais tarefas
+        const tarefasUser1 = await tarefaService.buscarPorUsuarioId(usuario1.id)
+        expect(tarefasUser1).toHaveLength(0)
+
+        // Verifica que usuário 2 ainda tem sua tarefa
+        const tarefasUser2 = await tarefaService.buscarPorUsuarioId(usuario2.id)
+        expect(tarefasUser2).toHaveLength(1)
+        expect(tarefasUser2[0]?.id).toBe(tarefaUsuario2.id)
+      })
+
+      test('deve lidar com tentativa de deletar tarefa já deletada', async () => {
+        // Arrange
+        const usuario = await criarUsuario()
+        const tarefa = await criarTarefa(usuario.id)
+
+        // Act - Deleta uma vez
+        const primeiraTentativa = await tarefaService.deletarTarefa(tarefa.id)
+        expect(primeiraTentativa).toBe(true)
+
+        // Assert - Segunda tentativa deve falhar (tarefa não existe mais)
+        await expect(tarefaService.deletarTarefa(tarefa.id)).rejects.toThrow(TarefaNaoEncontradaError)
+      })
     })
   })
 })

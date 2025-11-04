@@ -1,5 +1,5 @@
-import { Usuario } from '../../database/models/Usuario'
-import type { UsuarioCreationAttributes } from '../../database/models/Usuario'
+import { Usuario } from '../database/models/Usuario'
+import type { UsuarioCreationAttributes } from '../database/models/Usuario'
 
 export const criarUsuario = async (overrides?: Partial<UsuarioCreationAttributes>): Promise<Usuario> => {
   return await Usuario.create({

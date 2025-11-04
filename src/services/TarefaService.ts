@@ -8,6 +8,8 @@ import type { ITarefaRepository } from '../repositories/interfaces/ITarefaReposi
 import type Tarefa from '../database/models/Tarefa'
 import type { TarefaCreationAttributes } from '../database/models/Tarefa'
 
+import { TarefaNaoEncontradaError, TarefaDadosInvalidosError } from '../errors'
+
 export class TarefaService implements ITarefaService {
   private tarefaRepository: ITarefaRepository
 
@@ -24,22 +26,67 @@ export class TarefaService implements ITarefaService {
   }
 
   async buscarPorStatus(status: string): Promise<Tarefa[]> {
-    return await this.tarefaRepository.findByStatus(status)
+    const statusNormalizado = status.toLowerCase()
+    const statusValidos = ['pendente', 'em_andamento', 'concluida']
+
+    if (!statusValidos.includes(statusNormalizado)) {
+      throw new TarefaDadosInvalidosError(`Status inválido: ${status}`)
+    }
+
+    return await this.tarefaRepository.findByStatus(statusNormalizado)
   }
 
   async listarTarefas(): Promise<Tarefa[]> {
-    throw new Error('Method not implemented.')
+    return await this.tarefaRepository.findAll()
   }
 
   async criarTarefa(tarefaData: TarefaCreationAttributes): Promise<Tarefa> {
-    throw new Error('Method not implemented.')
+    // Validações básicas
+    if (!tarefaData.titulo || tarefaData.titulo.trim().length === 0) {
+      throw new TarefaDadosInvalidosError('Título é obrigatório')
+    }
+
+    if (tarefaData.titulo.length > 255) {
+      throw new TarefaDadosInvalidosError('Título muito longo')
+    }
+
+    return await this.tarefaRepository.create(tarefaData)
   }
 
-  async atualizarTarefa(id: number, tarefaData: Partial<TarefaCreationAttributes>): Promise<Tarefa | null> {
-    throw new Error('Method not implemented.')
+  async atualizarTarefa(id: number, tarefaData: Partial<TarefaCreationAttributes>): Promise<Tarefa> {
+    // Verifica se tarefa existe
+    const tarefaExistente = await this.tarefaRepository.findById(id)
+    if (!tarefaExistente) {
+      throw new TarefaNaoEncontradaError()
+    }
+
+    // Validações de atualização
+    if (tarefaData.titulo !== undefined) {
+      if (!tarefaData.titulo || tarefaData.titulo.trim().length === 0) {
+        throw new TarefaDadosInvalidosError('Título é obrigatório')
+      }
+
+      if (tarefaData.titulo.length > 255) {
+        throw new TarefaDadosInvalidosError('Título muito longo')
+      }
+    }
+
+    const tarefaAtualizada = await this.tarefaRepository.update(id, tarefaData)
+
+    if (!tarefaAtualizada) {
+      throw new Error('Erro interno ao atualizar tarefa')
+    }
+
+    return tarefaAtualizada
   }
 
   async deletarTarefa(id: number): Promise<boolean> {
-    throw new Error('Method not implemented.')
+    // Verifica se tarefa existe
+    const tarefaExistente = await this.tarefaRepository.findById(id)
+    if (!tarefaExistente) {
+      throw new TarefaNaoEncontradaError()
+    }
+
+    return await this.tarefaRepository.delete(id)
   }
 }
