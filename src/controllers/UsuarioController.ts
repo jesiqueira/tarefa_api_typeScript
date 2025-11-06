@@ -2,9 +2,10 @@ import type { Request, Response } from 'express'
 import type { IAuthRequest } from '../middlewares/interfaces/IAuthRequest'
 import type { IUsuarioController } from './interfaces/IUsuarioController'
 import type UsuarioService from '../services/UsuarioService'
-import { criarUsuarioSchema, loginSchema } from '../schemas/usuarioSchemas'
+import { atualizarUsuarioSchema, criarUsuarioSchema, loginSchema } from '../schemas/usuarioSchemas'
 import { EmailEmUsoError, UsuarioNaoEncontradoError } from '../errors'
 import { z } from 'zod'
+import type { UsuarioCreationAttributes } from '../database/models/Usuario'
 
 export class UsuarioController implements IUsuarioController {
   constructor(private usuarioService: UsuarioService) {}
@@ -52,16 +53,79 @@ export class UsuarioController implements IUsuarioController {
     }
   }
 
-  buscarUsuarioLogado(req: IAuthRequest, res: Response): Promise<Response> {
-    throw new Error('Method not implemented.')
+  async buscarUsuarioLogado(req: IAuthRequest, res: Response): Promise<Response> {
+    try {
+      const usuarioId = req.usuario?.id
+
+      if (!usuarioId) {
+        return res.status(401).json({ error: 'Usuário não autenticado' })
+      }
+
+      const usuario = await this.usuarioService.buscarPorId(usuarioId)
+
+      if (!usuario) {
+        return res.status(404).json({ error: 'Usuário não encontrado' })
+      }
+
+      return res.status(200).json({
+        id: usuario.id,
+        nome: usuario.nome,
+        email: usuario.email,
+        createdAt: usuario.createdAt,
+        updatedAt: usuario.updatedAt,
+      })
+    } catch (error) {
+      return this.handleError(error, res)
+    }
   }
 
-  atualizarUsuario(req: IAuthRequest, res: Response): Promise<Response> {
-    throw new Error('Method not implemented.')
+  async atualizarUsuario(req: IAuthRequest, res: Response): Promise<Response> {
+    try {
+      const usuarioId = req.usuario?.id
+
+      if (!usuarioId) {
+        return res.status(401).json({ error: 'Usuário não autenticado' })
+      }
+
+      const dadosAtualizacao = atualizarUsuarioSchema.parse(req.body)
+
+      // CORREÇÃO: Converter IAtualizarUsuarioDTO para Partial<UsuarioCreationAttributes>
+      const dadosParaService: Partial<UsuarioCreationAttributes> = {}
+      if (dadosAtualizacao.nome !== undefined) {
+        dadosParaService.nome = dadosAtualizacao.nome
+      }
+
+      if (dadosAtualizacao.email !== undefined) {
+        dadosParaService.email = dadosAtualizacao.email
+      }
+
+      const usuarioAtualizado = await this.usuarioService.atualizarUsuario(usuarioId, dadosParaService)
+
+      return res.status(200).json({
+        id: usuarioAtualizado.id,
+        nome: usuarioAtualizado.nome,
+        email: usuarioAtualizado.email,
+        createdAt: usuarioAtualizado.createdAt,
+        updatedAt: usuarioAtualizado.updatedAt,
+      })
+    } catch (error) {
+      return this.handleError(error, res)
+    }
   }
 
-  deletarUsuario(req: IAuthRequest, res: Response): Promise<Response> {
-    throw new Error('Method not implemented.')
+  async deletarUsuario(req: IAuthRequest, res: Response): Promise<Response> {
+    try {
+      const usuarioId = req.usuario?.id
+
+      if (!usuarioId) {
+        return res.status(401).json({ error: 'Usuário não autorizado' })
+      }
+      await this.usuarioService.deletarUsuario(usuarioId)
+
+      return res.status(204).send()
+    } catch (error) {
+      return this.handleError(error, res)
+    }
   }
 
   private handleError(error: unknown, res: Response): Response {

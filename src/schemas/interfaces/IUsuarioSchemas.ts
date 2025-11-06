@@ -1,8 +1,8 @@
 // src/schemas/interfaces/IUsuarioSchemas.ts
 
 export interface ICriarUsuarioDTO {
-  nome: string | undefined
-  email: string | undefined
+  nome: string
+  email: string
   passwordHash: string
 }
 
@@ -11,7 +11,10 @@ export interface ILoginDTO {
   senha: string
 }
 
-export type IAtualizarUsuarioDTO = Partial<Omit<ICriarUsuarioDTO, 'passwordHash'>>
+export type IAtualizarUsuarioDTO = {
+  nome?: string | undefined
+  email?: string | undefined
+}
 
 export interface IUsuarioResponseDTO {
   id: number

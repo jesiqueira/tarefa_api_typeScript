@@ -21,12 +21,20 @@ export const criarMockResponse = (): Response => {
   return res as unknown as Response
 }
 
-export const criarMockAuthRequest = (usuarioId: number, email: string, overrides?: Partial<Request>): IAuthRequest =>
-  ({
-    body: {},
-    params: {},
-    query: {},
-    headers: {},
+export const criarMockAuthRequest = (usuarioId: number, email: string, overrides?: Partial<Omit<Request, 'usuario'>>): IAuthRequest => {
+  const baseRequest = criarMockRequest(overrides)
+  return {
+    ...baseRequest,
     usuario: { id: usuarioId, email },
-    ...overrides,
-  }) as IAuthRequest
+  } as IAuthRequest
+}
+
+// Helper para criar IAuthRequest SEM usuário (usuario é undefined)
+export const criarMockRequestSemUsuario = (overrides?: Partial<Omit<Request, 'usuario'>>): IAuthRequest => {
+  const baseRequest = criarMockRequest(overrides)
+  const authRequest = {
+    ...baseRequest,
+    usuario: undefined,
+  }
+  return authRequest as unknown as IAuthRequest
+}
