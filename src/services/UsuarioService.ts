@@ -59,24 +59,32 @@ export class UsuarioService implements IUsuarioService {
       throw new Error('Credenciais inválidas')
     }
 
-    const senhaValida = await this.verificarSenha(dados.senha, usuario.passwordHash)
+    try {
+      const senhaValida = await this.verificarSenha(dados.senha, usuario.passwordHash)
 
-    if (!senhaValida) {
-      throw new Error('Credenciais inválidas')
+      if (!senhaValida) {
+        throw new Error('Credenciais inválidas')
+      }
+
+      // Gera token JWT
+      const token = jwt.sign({ usuarioId: usuario.id, email: usuario.email }, process.env.JWT_SECRET || 'fallback-secret', { expiresIn: '24h' })
+
+      return { usuario, token }
+    } catch (error) {
+      // Se for erro de verificação de senha, relança como "Credenciais inválidas"
+      if (error instanceof Error && error.message.includes('verificar senha')) {
+        throw new Error('Credenciais inválidas')
+      }
+      // Caso contrário, relança o erro original
+      throw error
     }
-
-    // Gera token JWT
-    const token = jwt.sign({ usuarioId: usuario.id, email: usuario.email }, process.env.JWT_SECRET || 'fallback-secret', { expiresIn: '24h' })
-
-    return { usuario, token }
   }
 
   private async verificarSenha(senha: string, hash: string): Promise<boolean> {
     try {
       return await bcrypt.compare(senha, hash)
     } catch (error) {
-      console.error('Erro ao verificar senha:', error)
-      return false
+      throw new Error(`Erro ao verificar senha: ${error instanceof Error ? error.message : 'Erro desconhecido'}`)
     }
   }
 

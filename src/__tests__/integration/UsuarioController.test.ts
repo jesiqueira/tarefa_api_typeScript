@@ -6,6 +6,7 @@ import { UsuarioController } from '../../controllers/UsuarioController'
 import type { IUsuarioController } from '../../controllers/interfaces/IUsuarioController'
 import { criarUsuario, criarUsuarioComSenha } from '../../factories/UsuarioFactory'
 import { criarMockRequest, criarMockResponse, criarMockAuthRequest, criarMockRequestSemUsuario } from '../helpers/httpHelpers'
+import type { IAuthRequest } from '../../middlewares/interfaces/IAuthRequest'
 
 describe('UsuarioController', () => {
   let usuarioController: IUsuarioController
@@ -235,6 +236,46 @@ describe('UsuarioController', () => {
         error: 'Usuário não encontrado',
       })
     })
+
+    test('deve retornar 401 quando req.usuario é undefined', async () => {
+      // Arrange
+      const mockReq = criarMockRequestSemUsuario()
+      const mockRes = criarMockResponse()
+
+      // Act
+      await usuarioController.buscarUsuarioLogado(mockReq, mockRes)
+
+      // Assert
+      expect(mockRes.status).toHaveBeenCalledWith(401)
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: 'Usuário não autenticado',
+      })
+
+      // expect(usuarioService.buscarPorId).not.toHaveBeenCalled()
+    })
+
+    test('deve chamar handleError quando service lançar exceção', async () => {
+      // Arrange
+      const usuarioId = 1
+      const mockReq = criarMockAuthRequest(usuarioId, 'teste@email.com')
+      const mockRes = criarMockResponse()
+
+      // Mock do service para lançar um erro
+      const erroDoService = new Error('Erro de conexão com o banco')
+      jest.spyOn(usuarioService, 'buscarPorId').mockRejectedValueOnce(erroDoService)
+
+      // Spy no handleError para verificar se foi chamado
+      const handleErrorSpy = jest.spyOn(usuarioController as unknown as { handleError: (error: unknown, res: Response) => Response }, 'handleError')
+
+      // Act
+      await usuarioController.buscarUsuarioLogado(mockReq, mockRes)
+
+      // Assert
+      expect(handleErrorSpy).toHaveBeenCalledWith(erroDoService, mockRes)
+
+      // Cleanup
+      handleErrorSpy.mockRestore()
+    })
   })
 
   describe('atualizarUsuario', () => {
@@ -346,6 +387,44 @@ describe('UsuarioController', () => {
         detalhes: expect.any(Array),
       })
     })
+
+    test('deve retornar 401 quando req.usuario é undefined', async () => {
+      // Arrange
+      const mockReq = criarMockRequestSemUsuario()
+      const mockRes = criarMockResponse()
+
+      // Act
+      await usuarioController.atualizarUsuario(mockReq, mockRes)
+
+      // Assert
+      expect(mockRes.status).toHaveBeenCalledWith(401)
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: 'Usuário não autenticado',
+      })
+
+      // expect(usuarioService.atualizarUsuario).not.toHaveBeenCalled()
+    })
+
+    test('deve retornar 401 quando req.usuario.id é undefined', async () => {
+      // Arrange
+      const mockReq = {
+        ...criarMockRequest(),
+        usuario: { email: 'teste@email.com' }, // ← Sem id
+      } as IAuthRequest
+
+      const mockRes = criarMockResponse()
+
+      // Act
+      await usuarioController.atualizarUsuario(mockReq, mockRes)
+
+      // Assert
+      expect(mockRes.status).toHaveBeenCalledWith(401)
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: 'Usuário não autenticado',
+      })
+
+      // expect(usuarioService.atualizarUsuario).not.toHaveBeenCalled()
+    })
   })
 
   describe('deletarUsuario', () => {
@@ -385,6 +464,23 @@ describe('UsuarioController', () => {
       expect(mockRes.json).toHaveBeenCalledWith({
         error: 'Usuário não encontrado',
       })
+    })
+
+    test('deve retornar 401 quando req.usuario é undefined', async () => {
+      // Arrange
+      const mockReq = criarMockRequestSemUsuario()
+      const mockRes = criarMockResponse()
+
+      // Act
+      await usuarioController.deletarUsuario(mockReq, mockRes)
+
+      // Assert
+      expect(mockRes.status).toHaveBeenCalledWith(401)
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: 'Usuário não autorizado',
+      })
+
+      // expect(usuarioService.deletarUsuario).not.toHaveBeenCalled()
     })
   })
 

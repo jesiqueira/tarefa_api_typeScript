@@ -7,7 +7,6 @@ import { Usuario } from '../../database/models/Usuario'
 import { UsuarioRepository } from '../../repositories/UsuarioRepository'
 import { UsuarioService } from '../../services/UsuarioService'
 import type { UsuarioCreationAttributes } from '../../database/models/Usuario'
-
 import { UsuarioNaoEncontradoError, EmailEmUsoError } from '../../errors'
 
 describe('UsuariosService', () => {
@@ -162,7 +161,7 @@ describe('UsuariosService', () => {
             email,
             passwordHash: 'hash2',
           }),
-        ).rejects.toThrow()
+        ).rejects.toThrow(EmailEmUsoError)
       })
 
       test('deve criar usuario com campos mínimos obrigatórios', async () => {
@@ -180,6 +179,22 @@ describe('UsuariosService', () => {
         expect(usuarioCriado.id).toBeDefined()
         expect(usuarioCriado.nome).toBe('Mínimo')
         expect(usuarioCriado.email).toBe('minimo@email.com')
+      })
+
+      test('deve criptografar a senha ao criar usuário', async () => {
+        // Arrange
+        const senhaOriginal = 'minhaSenha123'
+
+        // Act
+        const usuarioCriado = await usuarioService.criarUsuario({
+          nome: 'Usuário Teste',
+          email: 'teste@email.com',
+          passwordHash: senhaOriginal,
+        })
+
+        // Assert
+        expect(usuarioCriado.passwordHash).not.toBe(senhaOriginal)
+        expect(usuarioCriado.passwordHash).toHaveLength(60) // bcrypt
       })
     })
 
@@ -307,9 +322,59 @@ describe('UsuariosService', () => {
         expect(usuarioDeletado).toBeNull()
       })
 
-      test('deve lancar erro ao tentar usuário inexistente', async () => {
+      test('deve lancar UsuarioNaoEncontradoError ao tentar usuário inexistente', async () => {
         // Act & Assert
-        await expect(usuarioService.deletarUsuario(99999)).rejects.toThrow('Usuário não encontrado')
+        await expect(usuarioService.deletarUsuario(99999)).rejects.toThrow(UsuarioNaoEncontradoError)
+      })
+    })
+
+    // --------------------------------------------------------------------
+    // LOGIN
+    // --------------------------------------------------------------------
+
+    describe('login', () => {
+      test('deve fazer login com credenciais válidas', async () => {
+        // Arrange
+        const email = 'login@email.com'
+        const senha = 'senhaCorreta123'
+
+        await usuarioService.criarUsuario({
+          nome: 'Usuário Login',
+          email,
+          passwordHash: senha,
+        })
+
+        // Act
+        const resultado = await usuarioService.login({ email, senha })
+
+        // Assert
+        expect(resultado.usuario.email).toBe(email)
+        expect(resultado.token).toBeDefined()
+        expect(typeof resultado.token).toBe('string')
+      })
+
+      test('deve lançar erro quando usuário não existe', async () => {
+        // Arrange
+        const dadosLogin = {
+          email: 'naoexiste@email.com',
+          senha: 'qualquersenha',
+        }
+
+        // Act & Assert
+        await expect(usuarioService.login(dadosLogin)).rejects.toThrow('Credenciais inválidas')
+      })
+
+      test('deve lançar erro com senha incorreta', async () => {
+        // Arrange
+        const email = 'teste@email.com'
+        await usuarioService.criarUsuario({
+          nome: 'Usuário Teste',
+          email,
+          passwordHash: 'senhaCorreta',
+        })
+
+        // Act & Assert
+        await expect(usuarioService.login({ email, senha: 'senhaErrada' })).rejects.toThrow('Credenciais inválidas')
       })
     })
   })
