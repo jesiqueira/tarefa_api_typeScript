@@ -28,6 +28,11 @@ export interface IUsuarioService {
   criarUsuario(usuarioData: UsuarioCreationAttributes): Promise<Usuario>
 
   /**
+   * Realizar login
+   */
+  login(dados: { email: string; senha: string }): Promise<{ usuario: Usuario; token: string }>
+
+  /**
    * Atualizar um usuário existente
    */
   atualizarUsuario(id: number, usuarioData: Partial<UsuarioCreationAttributes>): Promise<Usuario>

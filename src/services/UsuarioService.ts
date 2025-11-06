@@ -7,6 +7,8 @@ import type { IUsuarioService } from './interfaces/IUsuarioService'
 import type { IUsuarioRepository } from '../repositories/interfaces/IUsuarioRepository'
 import type { Usuario } from '../database/models/Usuario'
 import type { UsuarioCreationAttributes } from '../database/models/Usuario'
+import bcrypt from 'bcryptjs'
+import jwt from 'jsonwebtoken'
 
 import { UsuarioNaoEncontradoError, EmailEmUsoError } from '../errors'
 
@@ -35,7 +37,47 @@ export class UsuarioService implements IUsuarioService {
     if (usuarioExistente) {
       throw new EmailEmUsoError()
     }
-    return await this.usuarioRepository.create(usuarioData)
+    const senhaCriptografada = await this.criptografarSenha(usuarioData.passwordHash)
+
+    const usuarioComSenhaSegura = {
+      ...usuarioData,
+      passwordHash: senhaCriptografada,
+    }
+
+    return await this.usuarioRepository.create(usuarioComSenhaSegura)
+  }
+
+  private async criptografarSenha(senha: string): Promise<string> {
+    const saltRounds = 12 // ← Quanto maior, mais seguro (porém mais lento)
+    return await bcrypt.hash(senha, saltRounds)
+  }
+
+  async login(dados: { email: string; senha: string }): Promise<{ usuario: Usuario; token: string }> {
+    const usuario = await this.usuarioRepository.findByEmail(dados.email)
+
+    if (!usuario) {
+      throw new Error('Credenciais inválidas')
+    }
+
+    const senhaValida = await this.verificarSenha(dados.senha, usuario.passwordHash)
+
+    if (!senhaValida) {
+      throw new Error('Credenciais inválidas')
+    }
+
+    // Gera token JWT
+    const token = jwt.sign({ usuarioId: usuario.id, email: usuario.email }, process.env.JWT_SECRET || 'fallback-secret', { expiresIn: '24h' })
+
+    return { usuario, token }
+  }
+
+  private async verificarSenha(senha: string, hash: string): Promise<boolean> {
+    try {
+      return await bcrypt.compare(senha, hash)
+    } catch (error) {
+      console.error('Erro ao verificar senha:', error)
+      return false
+    }
   }
 
   async atualizarUsuario(id: number, usuarioData: Partial<UsuarioCreationAttributes>): Promise<Usuario> {
