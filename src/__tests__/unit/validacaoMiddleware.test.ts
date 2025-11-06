@@ -7,7 +7,7 @@ import { criarMockRequest, criarMockResponse } from '../helpers/httpHelpers'
 
 // Tipo para mock do ZodSchema
 type MockZodSchema = Pick<z.ZodSchema, 'parseAsync'> & {
-  _type?: any
+  _type?: unknown
 }
 
 describe('Middlewares de Validação', () => {
