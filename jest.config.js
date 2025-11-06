@@ -22,6 +22,14 @@ module.exports = {
   // ✅ Configure para mostrar describes
   verbose: true,
 
+  // ✅ ADICIONE ESTA CONFIGURAÇÃO PARA IGNORAR HELPERS
+  testPathIgnorePatterns: [
+    '/node_modules/',
+    '/src/__tests__/helpers/', // ← IGNORA HELPERS
+    '/src/__tests__/factories/', // ← IGNORA FACTORIES
+    '/src/tests/', // ← IGNORA ARQUIVOS DE SETUP
+  ],
+
   collectCoverage: true,
   coverageDirectory: 'coverage',
   collectCoverageFrom: [
@@ -40,6 +48,8 @@ module.exports = {
     '!src/__tests__/**', // ← EXCLUI SEUS TESTES
     '!src/database/database.ts',
     '!src/**/*.d.ts',
+    '!src/__tests__/helpers/**',
+    '!src/__tests__/factories/**',
   ],
   coverageReporters: ['text-summary', 'lcov', 'html'],
 

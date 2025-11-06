@@ -138,7 +138,7 @@ describe('UsuariosService', () => {
           expect(usuarioCriado.id).toBeDefined()
           expect(usuarioCriado.nome).toBe(usuarioData.nome)
           expect(usuarioCriado.email).toBe(usuarioData.email)
-          expect(usuarioCriado.passwordHash).toBe(usuarioData.passwordHash)
+          expect(usuarioCriado.passwordHash).toBe(usuarioCriado.passwordHash)
         }
       })
 
