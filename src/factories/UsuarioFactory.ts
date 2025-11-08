@@ -1,3 +1,5 @@
+// src/factories/UsuarioFactory.ts
+
 import { Usuario } from '../database/models/Usuario'
 import type { UsuarioCreationAttributes } from '../database/models/Usuario'
 import bcrypt from 'bcryptjs'

@@ -1,3 +1,5 @@
+// src/middlewares/autorizacao.ts
+
 import type { Response, NextFunction } from 'express'
 import type { IAuthRequest } from './interfaces/IAuthRequest'
 

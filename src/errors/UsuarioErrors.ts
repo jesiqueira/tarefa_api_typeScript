@@ -1,3 +1,5 @@
+// src/errors/UsuarioErrors.ts
+
 import { AppError } from './AppError'
 
 /**
