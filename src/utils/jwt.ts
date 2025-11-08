@@ -33,14 +33,26 @@ export const verificarToken = (token: string): TokenPayload => {
 /**
  * Extrai o token do header Authorization
  */
+// export const extrairTokenDoHeader = (authHeader: string | undefined): string | null => {
+//   if (!authHeader) return null
+
+//   const [scheme, token] = authHeader.split(' ')
+
+//   if (scheme !== 'Bearer' || !token) {
+//     return null
+//   }
+
+//   return token
+// }
 export const extrairTokenDoHeader = (authHeader: string | undefined): string | null => {
   if (!authHeader) return null
 
-  const [scheme, token] = authHeader.split(' ')
+  // Usar regex para dividir por um ou mais espaços
+  const parts = authHeader.trim().split(/\s+/)
 
-  if (scheme !== 'Bearer' || !token) {
+  if (parts.length < 2 || parts[0] !== 'Bearer' || !parts[1]) {
     return null
   }
 
-  return token
+  return parts[1]
 }
