@@ -1,7 +1,10 @@
 import { Tarefa } from '../database/models/Tarefa'
-import type { TarefaCreationAttributes } from '../database/models/Tarefa'
+import type { TarefaCreationAttributes, TarefaAttributes } from '../database/models/Tarefa'
 import type { ModelStatic } from 'sequelize'
 import type { ITarefaRepository } from './interfaces/ITarefaRepository'
+import type { IAtualizarTarefaDTO, ICriarTarefaDTO, IFiltroTarefaDTO } from '../schemas/interfaces/ITarefaSchemas'
+import type { WhereOptions, FindAndCountOptions } from 'sequelize'
+import { Op } from 'sequelize'
 
 export class TarefaRepository implements ITarefaRepository {
   private model: ModelStatic<Tarefa>
@@ -19,40 +22,113 @@ export class TarefaRepository implements ITarefaRepository {
   }
 
   async findByUsuarioId(usuarioId: number): Promise<Tarefa[]> {
-    return await this.model.findAll({ where: { usuarioId } })
+    return await this.model.findAll({ where: { usuarioId }, order: [['createdAt', 'DESC']] })
   }
 
   async findByStatus(status: string): Promise<Tarefa[]> {
-    return await this.model.findAll({ where: { status } })
+    return await this.model.findAll({ where: { status }, order: [['createdAt', 'DESC']] })
   }
 
   async findAll(): Promise<Tarefa[]> {
-    return await this.model.findAll()
+    return await this.model.findAll({ order: [['createdAt', 'DESC']] })
   }
 
-  async create(tarefaData: TarefaCreationAttributes): Promise<Tarefa> {
-    return await this.model.create(tarefaData)
+  async findAllWithPagination(filtros: IFiltroTarefaDTO): Promise<{ data: Tarefa[]; total: number }> {
+    const { page = 1, limit = 25, titulo, status, usuarioId, criadoApos, criadoAntes, ordenarPor = 'createdAt', ordenarDirecao = 'DESC' } = filtros
+
+    const offset = (page - 1) * limit
+
+    // Construir where conditions com Op (Operadores do Sequelize)
+    const where: WhereOptions<TarefaAttributes> = {}
+
+    if (titulo) {
+      where.titulo = { [Op.like]: `%${titulo}%` }
+    }
+
+    if (status) {
+      where.status = status
+    }
+
+    if (usuarioId) {
+      where.usuarioId = usuarioId
+    }
+
+    // Filtro por data - abordagem mais segura
+    if (criadoApos && criadoAntes) {
+      where.createdAt = {
+        [Op.between]: [new Date(criadoApos), new Date(criadoAntes)],
+      }
+    } else {
+      if (criadoApos) {
+        where.createdAt = {
+          ...(where.createdAt as object),
+          [Op.gte]: new Date(criadoApos),
+        }
+      }
+
+      if (criadoAntes) {
+        where.createdAt = {
+          ...(where.createdAt as object),
+          [Op.lte]: new Date(criadoAntes),
+        }
+      }
+    }
+
+    const options: FindAndCountOptions<TarefaAttributes> = {
+      where,
+      order: [[ordenarPor, ordenarDirecao]],
+      offset,
+      limit,
+    }
+
+    const { rows: data, count: total } = await Tarefa.findAndCountAll(options)
+
+    return { data, total }
   }
 
-  async update(id: number, tarefaData: Partial<TarefaCreationAttributes>): Promise<Tarefa | null> {
+  async create(tarefaData: ICriarTarefaDTO): Promise<Tarefa> {
+    // Converter ICriarTarefaDTO para TarefaCreationAttributes
+    const dadosCriacao: TarefaCreationAttributes = {
+      titulo: tarefaData.titulo,
+      descricao: tarefaData.descricao ?? null, // Garantir que seja null se undefined
+      status: tarefaData.status ?? 'pendente',
+      usuarioId: tarefaData.usuarioId,
+    }
+
+    return await this.model.create(dadosCriacao)
+  }
+
+  async update(id: number, tarefaData: IAtualizarTarefaDTO): Promise<Tarefa | null> {
     const tarefa = await this.findById(id)
 
     if (!tarefa) {
       return null
     }
 
-    return await tarefa.update(tarefaData)
+    // Converter IAtualizarTarefaDTO para Partial<TarefaCreationAttributes>
+    const dadosAtualizacao: Partial<TarefaCreationAttributes> = {}
+
+    if (tarefaData.titulo !== undefined) {
+      dadosAtualizacao.titulo = tarefaData.titulo
+    }
+
+    if (tarefaData.descricao !== undefined) {
+      dadosAtualizacao.descricao = tarefaData.descricao
+    }
+
+    if (tarefaData.status !== undefined) {
+      dadosAtualizacao.status = tarefaData.status
+    }
+
+    return await tarefa.update(dadosAtualizacao)
   }
 
   async delete(id: number): Promise<boolean> {
-    const tarefa = await this.findById(id)
+    const result = await Tarefa.destroy({
+      where: { id },
+    })
 
-    if (!tarefa) {
-      return false
-    }
-
-    await tarefa.destroy()
-    return true
+    return result > 0
   }
 }
 

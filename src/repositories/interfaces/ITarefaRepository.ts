@@ -3,7 +3,7 @@
  * Interface define o CONTRATO que o TarefaRepository deve seguir
  */
 import type { Tarefa } from '../../database/models/Tarefa'
-import type { TarefaCreationAttributes } from '../../database/models/Tarefa'
+import type { IFiltroTarefaDTO, ICriarTarefaDTO, IAtualizarTarefaDTO } from '../../schemas/interfaces/ITarefaSchemas'
 
 export interface ITarefaRepository {
   /**
@@ -34,11 +34,18 @@ export interface ITarefaRepository {
   findAll(): Promise<Tarefa[]>
 
   /**
+   * Lista tarefas com filtros
+   * @param filtros
+   * @returns Promise<{ data: Tarefa[]; total: number }>
+   */
+  findAllWithPagination(filtros: IFiltroTarefaDTO): Promise<{ data: Tarefa[]; total: number }>
+
+  /**
    * Cria uma nova tarefa
    * @param tarefaData - Dados para criação da tarefa
    * @returns Promise<Tarefa> - Tarefa criada
    */
-  create(tarefaData: TarefaCreationAttributes): Promise<Tarefa>
+  create(tarefaData: ICriarTarefaDTO): Promise<Tarefa>
 
   /**
    * Atualiza uma tarefa existente
@@ -46,7 +53,7 @@ export interface ITarefaRepository {
    * @param tarefaData - Dados parciais para atualização
    * @returns Promise<Tarefa | null> - Tarefa atualizada ou null se não encontrada
    */
-  update(id: number, tarefaData: Partial<TarefaCreationAttributes>): Promise<Tarefa | null>
+  update(id: number, tarefaData: IAtualizarTarefaDTO): Promise<Tarefa | null>
 
   /**
    * Deleta uma tarefa

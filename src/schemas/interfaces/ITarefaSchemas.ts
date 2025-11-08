@@ -4,7 +4,7 @@ export type StatusTarefa = 'pendente' | 'em_andamento' | 'concluida'
 
 export interface ICriarTarefaDTO {
   titulo: string
-  descricao?: string | undefined
+  descricao?: string | undefined | null
   usuarioId: number
   status?: StatusTarefa
 }

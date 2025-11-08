@@ -18,7 +18,7 @@ export const TAREFA_TABLE_NAME = 'tarefas'
 // 2. Definições de Interface para Tipagem (TypeScript)
 // ----------------------------------------------------------------------
 
-interface TarefaAttributes {
+export interface TarefaAttributes {
   id: number
   titulo: string // Novo nome do campo
   descricao: string | null // Novo nome do campo

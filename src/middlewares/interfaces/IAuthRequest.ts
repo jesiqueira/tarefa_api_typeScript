@@ -5,5 +5,6 @@ export interface IAuthRequest extends Request {
   usuario?: {
     id: number
     email: string
+    role?: string
   }
 }

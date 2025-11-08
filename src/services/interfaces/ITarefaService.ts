@@ -3,44 +3,50 @@
  * Interface para o TarefaService
  */
 
-import type { Tarefa } from '../../database/models/Tarefa'
-import type { TarefaCreationAttributes } from '../../database/models/Tarefa'
+import type {
+  IFiltroTarefaDTO,
+  ITarefaResponseDTO,
+  ITarefaListaResponseDTO,
+  ICriarTarefaDTO,
+  IAtualizarTarefaDTO,
+} from '../../schemas/interfaces/ITarefaSchemas'
 
 export interface ITarefaService {
   /**
    * Buscar Tarefa por ID
    * @param id
    */
-  buscarPorId(id: number): Promise<Tarefa | null>
+  buscarPorId(id: number): Promise<ITarefaResponseDTO | null>
 
   /**
    * Buscar Tarefas por usuarioId
    * @param usuarioId
    */
-  buscarPorUsuarioId(usuarioId: number): Promise<Tarefa[]>
+  buscarPorUsuarioId(usuarioId: number): Promise<ITarefaResponseDTO[]>
 
   /**
    * Buscar por status da Tarefa
    * @param status
    */
-  buscarPorStatus(status: string): Promise<Tarefa[]>
+  buscarPorStatus(status: string): Promise<ITarefaResponseDTO[]>
 
   /**
-   * Listar todas as Tarefas
+   * Listar tarefas com paginação e filtros
+   * @param filtros - Filtros e opções de paginação
    */
-  listarTarefas(): Promise<Tarefa[]>
+  listarTarefas(filtros: IFiltroTarefaDTO): Promise<ITarefaListaResponseDTO>
 
   /**
    * Criar uma Tarefa
    */
-  criarTarefa(tarefaData: TarefaCreationAttributes): Promise<Tarefa>
+  criarTarefa(tarefaData: ICriarTarefaDTO): Promise<ITarefaResponseDTO>
 
   /**
    * Atualizar Tarefa existente
    * @param id
    * @param tarefaData
    */
-  atualizarTarefa(id: number, tarefaData: Partial<TarefaCreationAttributes>): Promise<Tarefa | null>
+  atualizarTarefa(id: number, tarefaData: IAtualizarTarefaDTO): Promise<ITarefaResponseDTO>
 
   /**
    * Deletar uma tarefa
