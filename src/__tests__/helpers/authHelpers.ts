@@ -11,9 +11,9 @@ export const criarUsuarioComToken = async (dados?: Partial<Usuario>): Promise<{ 
 }
 
 function getAppSecret(): string {
-  const secret = process.env.APP_SECRET
+  const secret = process.env.JWT_SECRET
   if (!secret) {
-    throw new Error('APP_SECRET não está definido nas variáveis de ambiente.')
+    throw new Error('JWT_SECRET não está definido nas variáveis de ambiente.')
   }
   return secret
 }
