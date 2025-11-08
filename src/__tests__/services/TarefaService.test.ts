@@ -296,7 +296,7 @@ describe('TarefaService', () => {
   })
 
   describe('listarTarefas', () => {
-    test('deve retornar todas as tarefas quando existirem ', async () => {
+    test('deve retornar lista paginada de tarefas quando existirem ', async () => {
       // Arrange
       const usuario1 = await criarUsuario()
       const usuario2 = await criarUsuario()
@@ -315,38 +315,229 @@ describe('TarefaService', () => {
       })
 
       // Act
-      const tarefas = await tarefaService.listarTarefas()
+      const resultado = await tarefaService.listarTarefas({})
 
       // Assert
 
-      expect(tarefas).toBeDefined()
-      expect(tarefas).toHaveLength(3)
-      expect(Array.isArray(tarefas)).toBe(true)
+      expect(resultado).toBeDefined()
+      expect(resultado.dados).toHaveLength(3)
+      expect(Array.isArray(resultado.dados)).toBe(true)
+
+      // Verifica estrutura de paginação
+      expect(resultado.paginacao).toBeDefined()
+      expect(resultado.paginacao.pagina).toBe(1) // valor padrão
+      expect(resultado.paginacao.limite).toBe(25) // valor padrão
+      expect(resultado.paginacao.total).toBe(3)
+      expect(resultado.paginacao.totalPaginas).toBe(1)
 
       // Verifica conteúdo sem depender da ordem
-      const titulos = tarefas.map((t) => t.titulo)
+      const titulos = resultado.dados.map((t) => t.titulo)
       expect(titulos).toEqual(expect.arrayContaining(['Tarefa 1', 'Tarefa 2', 'Tarefa 3']))
 
       // Verifica status
-      const statusList = tarefas.map((t) => t.status)
+      const statusList = resultado.dados.map((t) => t.status)
       expect(statusList).toEqual(expect.arrayContaining(['pendente', 'em_andamento', 'concluida']))
 
       // Verifica usuários
-      const usuarioIds = tarefas.map((t) => t.usuarioId)
+      const usuarioIds = resultado.dados.map((t) => t.usuarioId)
       expect(usuarioIds).toContain(usuario1.id)
       expect(usuarioIds).toContain(usuario2.id)
     })
 
-    test('deve retornar array vazio quando não existir tarefas', async () => {
+    test('deve retornar lista vazia quando não existir tarefas', async () => {
       // ACT
 
-      const tarefas = await tarefaService.listarTarefas()
+      const resultado = await tarefaService.listarTarefas({})
 
       //Assert
 
-      expect(tarefas).toBeDefined()
-      expect(tarefas).toHaveLength(0)
-      expect(Array.isArray(tarefas)).toBe(true)
+      expect(resultado).toBeDefined()
+      expect(resultado.dados).toHaveLength(0)
+      expect(Array.isArray(resultado.dados)).toBe(true)
+      expect(resultado.paginacao.total).toBe(0)
+      expect(resultado.paginacao.totalPaginas).toBe(0)
+      expect(resultado.paginacao.pagina).toBe(1)
+      expect(resultado.paginacao.limite).toBe(25)
+    })
+
+    test('deve aplicar paginação corretamente', async () => {
+      // Arrange
+      const usuario = await criarUsuario()
+
+      // Cria 5 tarefas
+      for (let i = 1; i <= 5; i++) {
+        await criarTarefa(usuario.id, {
+          titulo: `Tarefa ${i}`,
+        })
+      }
+
+      // Act - Página 1 com 2 itens
+      const resultadoPagina1 = await tarefaService.listarTarefas({
+        page: 1,
+        limit: 2,
+      })
+
+      // Assert - Página 1
+      expect(resultadoPagina1.dados).toHaveLength(2)
+      expect(resultadoPagina1.paginacao.pagina).toBe(1)
+      expect(resultadoPagina1.paginacao.limite).toBe(2)
+      expect(resultadoPagina1.paginacao.total).toBe(5)
+      expect(resultadoPagina1.paginacao.totalPaginas).toBe(3)
+
+      // Act - Página 2 com 2 itens
+      const resultadoPagina2 = await tarefaService.listarTarefas({
+        page: 2,
+        limit: 2,
+      })
+
+      // Assert - Página 2
+      expect(resultadoPagina2.dados).toHaveLength(2)
+      expect(resultadoPagina2.paginacao.pagina).toBe(2)
+      expect(resultadoPagina2.paginacao.limite).toBe(2)
+      expect(resultadoPagina2.paginacao.total).toBe(5)
+      expect(resultadoPagina2.paginacao.totalPaginas).toBe(3)
+
+      // Act - Página 3 com 2 itens
+      const resultadoPagina3 = await tarefaService.listarTarefas({
+        page: 3,
+        limit: 2,
+      })
+
+      // Assert - Página 3 (última página com 1 item)
+      expect(resultadoPagina3.dados).toHaveLength(1)
+      expect(resultadoPagina3.paginacao.pagina).toBe(3)
+      expect(resultadoPagina3.paginacao.limite).toBe(2)
+      expect(resultadoPagina3.paginacao.total).toBe(5)
+      expect(resultadoPagina3.paginacao.totalPaginas).toBe(3)
+    })
+
+    test('deve filtrar tarefas por título', async () => {
+      // Arrange
+      const usuario = await criarUsuario()
+
+      await criarTarefa(usuario.id, { titulo: 'Tarefa importante' })
+      await criarTarefa(usuario.id, { titulo: 'Outra tarefa' })
+      await criarTarefa(usuario.id, { titulo: 'Tarefa urgente' })
+
+      // Act
+      const resultado = await tarefaService.listarTarefas({
+        titulo: 'importante',
+      })
+
+      // Assert
+      expect(resultado.dados).toHaveLength(1)
+      expect(resultado.dados[0]?.titulo).toBe('Tarefa importante')
+      expect(resultado.paginacao.total).toBe(1)
+    })
+
+    test('deve filtrar tarefas por status', async () => {
+      // Arrange
+      const usuario = await criarUsuario()
+
+      await criarTarefa(usuario.id, { titulo: 'Tarefa 1', status: 'pendente' })
+      await criarTarefa(usuario.id, { titulo: 'Tarefa 2', status: 'concluida' })
+      await criarTarefa(usuario.id, { titulo: 'Tarefa 3', status: 'pendente' })
+
+      // Act
+      const resultado = await tarefaService.listarTarefas({
+        status: 'pendente',
+      })
+
+      // Assert
+      expect(resultado.dados).toHaveLength(2)
+      resultado.dados.forEach((tarefa) => {
+        expect(tarefa.status).toBe('pendente')
+      })
+      expect(resultado.paginacao.total).toBe(2)
+    })
+
+    test('deve filtrar tarefas por usuarioId', async () => {
+      // Arrange
+      const usuario1 = await criarUsuario()
+      const usuario2 = await criarUsuario()
+
+      await criarTarefa(usuario1.id, { titulo: 'Tarefa User 1' })
+      await criarTarefa(usuario1.id, { titulo: 'Outra Tarefa User 1' })
+      await criarTarefa(usuario2.id, { titulo: 'Tarefa User 2' })
+
+      // Act
+      const resultado = await tarefaService.listarTarefas({
+        usuarioId: usuario1.id,
+      })
+
+      // Assert
+      expect(resultado.dados).toHaveLength(2)
+      resultado.dados.forEach((tarefa) => {
+        expect(tarefa.usuarioId).toBe(usuario1.id)
+      })
+      expect(resultado.paginacao.total).toBe(2)
+    })
+
+    test('deve ordenar tarefas corretamente', async () => {
+      // Arrange
+      const usuario = await criarUsuario()
+
+      await criarTarefa(usuario.id, { titulo: 'Tarefa B' })
+      await criarTarefa(usuario.id, { titulo: 'Tarefa A' })
+      await criarTarefa(usuario.id, { titulo: 'Tarefa C' })
+
+      // Act - Ordenar por título ASC
+      const resultado = await tarefaService.listarTarefas({
+        ordenarPor: 'titulo',
+        ordenarDirecao: 'ASC',
+      })
+
+      // Assert
+      expect(resultado.dados).toHaveLength(3)
+      expect(resultado.dados[0]?.titulo).toBe('Tarefa A')
+      expect(resultado.dados[1]?.titulo).toBe('Tarefa B')
+      expect(resultado.dados[2]?.titulo).toBe('Tarefa C')
+    })
+
+    test('deve usar valores padrão quando filtros não são fornecidos', async () => {
+      // Arrange
+      const usuario = await criarUsuario()
+      await criarTarefa(usuario.id, { titulo: 'Tarefa Teste' })
+
+      // Act - Chamar sem parâmetros
+      const resultado = await tarefaService.listarTarefas({})
+
+      // Assert
+      expect(resultado.paginacao.pagina).toBe(1)
+      expect(resultado.paginacao.limite).toBe(25)
+    })
+
+    test('deve aplicar ordenação nos dados retornados', async () => {
+      // Arrange
+      const usuario = await criarUsuario()
+
+      await criarTarefa(usuario.id, { titulo: 'Tarefa C' })
+      await criarTarefa(usuario.id, { titulo: 'Tarefa A' })
+      await criarTarefa(usuario.id, { titulo: 'Tarefa B' })
+
+      // Act - Ordenar por título ASC
+      const resultadoAsc = await tarefaService.listarTarefas({
+        ordenarPor: 'titulo',
+        ordenarDirecao: 'ASC',
+      })
+
+      // Assert - Verifica ordenação ASC
+      expect(resultadoAsc.dados).toHaveLength(3)
+      expect(resultadoAsc.dados[0]?.titulo).toBe('Tarefa A')
+      expect(resultadoAsc.dados[1]?.titulo).toBe('Tarefa B')
+      expect(resultadoAsc.dados[2]?.titulo).toBe('Tarefa C')
+
+      // Act - Ordenar por título DESC
+      const resultadoDesc = await tarefaService.listarTarefas({
+        ordenarPor: 'titulo',
+        ordenarDirecao: 'DESC',
+      })
+
+      // Assert - Verifica ordenação DESC
+      expect(resultadoDesc.dados).toHaveLength(3)
+      expect(resultadoDesc.dados[0]?.titulo).toBe('Tarefa C')
+      expect(resultadoDesc.dados[1]?.titulo).toBe('Tarefa B')
+      expect(resultadoDesc.dados[2]?.titulo).toBe('Tarefa A')
     })
   })
 
@@ -415,7 +606,7 @@ describe('TarefaService', () => {
         // Assert
         expect(tarefaCriada).toBeDefined()
         expect(tarefaCriada.titulo).toBe('Tarefa sem descrição')
-        expect(tarefaCriada.descricao).toBeUndefined()
+        expect(tarefaCriada.descricao).toBeNull()
       })
 
       test('deve falhar ao criar tarefa com usuarioId inválido', async () => {
@@ -542,23 +733,25 @@ describe('TarefaService', () => {
         await expect(tarefaService.atualizarTarefa(99999, dadosAtualizacao)).rejects.toThrow(TarefaNaoEncontradaError)
       })
 
-      test('deve atualizar usuarioId quando fornecido (validação fica no controller)', async () => {
+      test('deve manter usuarioId original mesmo quando fornecido novo usuarioId', async () => {
         // Arrange
         const usuarioOriginal = await criarUsuario()
         const outroUsuario = await criarUsuario()
         const tarefa = await criarTarefa(usuarioOriginal.id)
 
         const dadosAtualizacao = {
-          usuarioId: outroUsuario.id, // Service permite, controller bloqueia
+          usuarioId: outroUsuario.id, // Tentativa de mudar usuarioId
           titulo: 'Novo Título',
         }
 
         // Act
         const tarefaAtualizada = await tarefaService.atualizarTarefa(tarefa.id, dadosAtualizacao)
 
-        // Assert - Service não valida usuarioId
+        // Assert - usuarioId não deve mudar (comportamento esperado)
         expect(tarefaAtualizada).toBeDefined()
-        expect(tarefaAtualizada.usuarioId).toBe(outroUsuario.id)
+        expect(tarefaAtualizada.titulo).toBe('Novo Título') // Título foi atualizado
+        expect(tarefaAtualizada.usuarioId).toBe(usuarioOriginal.id) // usuarioId permanece o original
+        expect(tarefaAtualizada.usuarioId).not.toBe(outroUsuario.id) // Não mudou para o novo
       })
 
       test('deve validar apenas dados de domínio necessários', async () => {
@@ -623,16 +816,19 @@ describe('TarefaService', () => {
           titulo: 'Tarefa Atualizada',
         }
 
-        // Mock do repositório para simular erro interno
+        // Mock completo com todos os métodos da interface
         const mockTarefaRepository: jest.Mocked<ITarefaRepository> = {
+          // Métodos de busca
           findById: jest.fn().mockResolvedValue(tarefa),
+          findByUsuarioId: jest.fn().mockResolvedValue([]),
+          findByStatus: jest.fn().mockResolvedValue([]),
+          findAll: jest.fn().mockResolvedValue([]),
+          findAllWithPagination: jest.fn().mockResolvedValue({ data: [], total: 0 }),
+
+          // Métodos de escrita
+          create: jest.fn().mockResolvedValue(tarefa),
           update: jest.fn().mockResolvedValue(null), // ← Retorna null propositalmente
-          // ... outros métodos do repositório que seu service usa
-          findByUsuarioId: jest.fn(),
-          findByStatus: jest.fn(),
-          findAll: jest.fn(),
-          create: jest.fn(),
-          delete: jest.fn(),
+          delete: jest.fn().mockResolvedValue(true),
         }
 
         const tarefaServiceComMock = new TarefaService(mockTarefaRepository)
@@ -681,8 +877,8 @@ describe('TarefaService', () => {
         const tarefa2 = await criarTarefa(usuario.id, { titulo: 'Tarefa 2' })
 
         // Verifica que ambas existem antes
-        const tarefasAntes = await tarefaService.listarTarefas()
-        expect(tarefasAntes).toHaveLength(2)
+        const tarefasAntes = await tarefaService.listarTarefas({})
+        expect(tarefasAntes.dados).toHaveLength(2)
 
         // Act - Deleta uma tarefa
         const resultado = await tarefaService.deletarTarefa(tarefa1.id)
@@ -691,9 +887,9 @@ describe('TarefaService', () => {
         expect(resultado).toBe(true)
 
         // Verifica listagem geral
-        const tarefasDepois = await tarefaService.listarTarefas()
-        expect(tarefasDepois).toHaveLength(1)
-        expect(tarefasDepois[0]?.id).toBe(tarefa2.id)
+        const tarefasDepois = await tarefaService.listarTarefas({})
+        expect(tarefasDepois.dados).toHaveLength(1)
+        expect(tarefasDepois.dados[0]?.id).toBe(tarefa2.id)
 
         // Verifica busca por usuário
         const tarefasUsuario = await tarefaService.buscarPorUsuarioId(usuario.id)
@@ -725,17 +921,24 @@ describe('TarefaService', () => {
         await expect(tarefaService.deletarTarefa(tarefaAndamento.id)).resolves.toBe(true)
 
         // Verifica que todas foram deletadas
-        const tarefasRestantes = await tarefaService.listarTarefas()
-        expect(tarefasRestantes).toHaveLength(0)
+        const tarefasRestantes = await tarefaService.listarTarefas({})
+        expect(tarefasRestantes.dados).toHaveLength(0)
       })
 
       test('deve deletar tarefa de usuário específico sem afetar outros usuários', async () => {
         // Arrange
-        const usuario1 = await criarUsuario()
-        const usuario2 = await criarUsuario()
+        const usuario1 = await criarUsuario({ nome: 'Usuario 1' })
+        const usuario2 = await criarUsuario({ nome: 'Usuario 2' })
 
         const tarefaUsuario1 = await criarTarefa(usuario1.id, { titulo: 'Tarefa User 1' })
         const tarefaUsuario2 = await criarTarefa(usuario2.id, { titulo: 'Tarefa User 2' })
+
+        // Verifica estado inicial
+        const tarefasUser1Inicial = await tarefaService.buscarPorUsuarioId(usuario1.id)
+        const tarefasUser2Inicial = await tarefaService.buscarPorUsuarioId(usuario2.id)
+
+        expect(tarefasUser1Inicial).toHaveLength(1)
+        expect(tarefasUser2Inicial).toHaveLength(1)
 
         // Act - Deleta tarefa do usuário 1
         const resultado = await tarefaService.deletarTarefa(tarefaUsuario1.id)

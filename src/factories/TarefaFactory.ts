@@ -1,4 +1,4 @@
-// tests/factories/TarefaFactory.ts
+// src/factories/TarefaFactory.ts
 import { Tarefa } from '../database/models/Tarefa'
 import type { TarefaCreationAttributes } from '../database/models/Tarefa'
 

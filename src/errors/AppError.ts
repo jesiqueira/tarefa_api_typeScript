@@ -1,3 +1,5 @@
+// src/errors/AppError.ts
+
 /**
  * Classe base para todos os erros da aplicação
  */

@@ -27,7 +27,6 @@ export const autenticar = (req: IAuthRequest, res: Response, next: NextFunction)
     req.usuario = {
       id: decoded.id,
       email: decoded.email,
-      role: decoded.role || 'user',
     }
 
     next()

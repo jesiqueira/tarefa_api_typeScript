@@ -1,3 +1,5 @@
+// src/errors/TarefaErros.ts
+
 import { AppError } from './AppError'
 
 export class TarefaNaoEncontradaError extends AppError {

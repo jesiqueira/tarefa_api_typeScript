@@ -3,9 +3,12 @@ import type { UsuarioCreationAttributes } from '../database/models/Usuario'
 import bcrypt from 'bcryptjs'
 
 export const criarUsuario = async (overrides?: Partial<UsuarioCreationAttributes>): Promise<Usuario> => {
+  const timestamp = Date.now()
+  const randomSuffix = Math.floor(Math.random() * 10000)
+
   return await Usuario.create({
     nome: 'Usuario Teste',
-    email: `usuario${Date.now()}@email.com`, // Email único
+    email: `usuario${timestamp}${randomSuffix}@email.com`, // Email mais único
     passwordHash: 'hash_segura',
     ...overrides,
   })
