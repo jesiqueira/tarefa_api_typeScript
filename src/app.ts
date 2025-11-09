@@ -2,6 +2,7 @@ import express from 'express'
 import type { Request, Response, NextFunction } from 'express'
 import cors from 'cors'
 import usuarioRoutes from './routes/usuario.routes'
+import tarefaRoutes from './routes/tarefa.routes'
 
 interface HttpError extends Error {
   status?: number
@@ -24,6 +25,7 @@ app.use(express.json())
 
 // Import e uso de Rotas
 app.use('/api/usuarios', usuarioRoutes)
+app.use('/api/tarefas', tarefaRoutes)
 
 // Boas Práticas: Middleware 404
 app.use((req: Request, res: Response, _next: NextFunction) => {

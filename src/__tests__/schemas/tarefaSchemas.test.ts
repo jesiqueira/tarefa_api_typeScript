@@ -22,7 +22,6 @@ describe('Tarefa Schemas', () => {
       const validData = {
         titulo: 'Tarefa de Teste',
         descricao: 'Descrição da tarefa',
-        usuarioId: 1,
         status: 'pendente',
       }
 
@@ -31,7 +30,6 @@ describe('Tarefa Schemas', () => {
       expect(result).toEqual({
         titulo: 'Tarefa de Teste',
         descricao: 'Descrição da tarefa',
-        usuarioId: 1,
         status: 'pendente',
       })
     })
@@ -40,7 +38,6 @@ describe('Tarefa Schemas', () => {
       const dataWithSpaces = {
         titulo: '  Tarefa com espaços  ',
         descricao: '  Descrição com espaços  ',
-        usuarioId: 1,
       }
 
       const result = criarTarefaSchema.parse(dataWithSpaces)
@@ -52,7 +49,6 @@ describe('Tarefa Schemas', () => {
     it('deve usar status padrão quando não fornecido', () => {
       const dataWithoutStatus = {
         titulo: 'Tarefa sem status',
-        usuarioId: 1,
       }
 
       const result = criarTarefaSchema.parse(dataWithoutStatus)
@@ -60,22 +56,20 @@ describe('Tarefa Schemas', () => {
       expect(result.status).toBe('pendente')
     })
 
-    it('deve transformar descrição vazia para null', () => {
+    it('deve transformar descrição vazia para string vazia', () => {
       const dataWithEmptyDescription = {
         titulo: 'Tarefa com descrição vazia',
         descricao: '   ',
-        usuarioId: 1,
       }
 
       const result = criarTarefaSchema.parse(dataWithEmptyDescription)
 
-      expect(result.descricao).toBeNull()
+      expect(result.descricao).toBe('')
     })
 
     it('deve rejeitar quando título está vazio', () => {
       const invalidData = {
         titulo: '',
-        usuarioId: 1,
       }
 
       expect(() => criarTarefaSchema.parse(invalidData)).toThrow('Título é obrigatorio')
@@ -84,35 +78,15 @@ describe('Tarefa Schemas', () => {
     it('deve rejeitar quando título é muito longo', () => {
       const invalidData = {
         titulo: 'a'.repeat(256),
-        usuarioId: 1,
       }
 
       expect(() => criarTarefaSchema.parse(invalidData)).toThrow()
-    })
-
-    it('deve rejeitar quando usuárioId não é positivo', () => {
-      const invalidData = {
-        titulo: 'Tarefa válida',
-        usuarioId: 0,
-      }
-
-      expect(() => criarTarefaSchema.parse(invalidData)).toThrow('ID do usuário deve ser positivo')
-    })
-
-    it('deve rejeitar quando usuárioId não é inteiro', () => {
-      const invalidData = {
-        titulo: 'Tarefa válida',
-        usuarioId: 1.5,
-      }
-
-      expect(() => criarTarefaSchema.parse(invalidData)).toThrow('ID do usuário deve ser um número inteiro')
     })
 
     it('deve rejeitar quando descrição é muito longa', () => {
       const invalidData = {
         titulo: 'Tarefa válida',
         descricao: 'a'.repeat(1001),
-        usuarioId: 1,
       }
 
       expect(() => criarTarefaSchema.parse(invalidData)).toThrow()
@@ -143,10 +117,7 @@ describe('Tarefa Schemas', () => {
 
       const result = atualizarTarefaSchema.parse(singleFieldData)
 
-      // O schema pode retornar campos com undefined, então vamos verificar
-      // que pelo menos o campo fornecido está presente e correto
       expect(result.titulo).toBe('Apenas título atualizado')
-      // Não vamos verificar campos não fornecidos pois podem ser undefined/null
     })
 
     it('deve validar atualização com campo descricao explícito', () => {
@@ -181,36 +152,30 @@ describe('Tarefa Schemas', () => {
       expect(result.descricao).toBe('Descrição com espaços')
     })
 
-    it('deve transformar descrição vazia para null', () => {
+    it('deve transformar descrição vazia para string vazia', () => {
       const dataWithEmptyDescription = {
         descricao: '   ',
       }
 
       const result = atualizarTarefaSchema.parse(dataWithEmptyDescription)
 
-      expect(result.descricao).toBeNull()
+      expect(result.descricao).toBe('')
     })
 
-    it('deve aceitar objeto vazio (comportamento atual do schema)', () => {
+    it('deve rejeitar objeto vazio', () => {
       const emptyData = {}
 
-      // Se o schema atual permite objeto vazio, vamos testar isso
-      const result = atualizarTarefaSchema.parse(emptyData)
-
-      // O resultado deve ser um objeto (possivelmente vazio ou com campos undefined)
-      expect(typeof result).toBe('object')
+      expect(() => atualizarTarefaSchema.parse(emptyData)).toThrow('Pelo menos um campo deve ser fornecido para atualização')
     })
 
-    it('deve aceitar todos os campos como undefined (comportamento atual)', () => {
+    it('deve rejeitar todos os campos como undefined', () => {
       const allUndefinedData = {
         titulo: undefined,
         descricao: undefined,
         status: undefined,
       }
 
-      const result = atualizarTarefaSchema.parse(allUndefinedData)
-
-      expect(typeof result).toBe('object')
+      expect(() => atualizarTarefaSchema.parse(allUndefinedData)).toThrow('Pelo menos um campo deve ser fornecido para atualização')
     })
 
     it('deve rejeitar quando título está vazio', () => {
@@ -248,16 +213,13 @@ describe('Tarefa Schemas', () => {
     it('deve retornar apenas campos definidos após o parse', () => {
       const data = {
         titulo: 'Novo título',
-        // descricao não fornecido
         status: 'em_andamento',
       }
 
       const result = atualizarTarefaSchema.parse(data)
 
-      // Deve ter os campos fornecidos
       expect(result.titulo).toBe('Novo título')
       expect(result.status).toBe('em_andamento')
-      // descricao pode ser undefined ou não estar presente
     })
   })
 

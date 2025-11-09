@@ -1,3 +1,5 @@
+// src/repositories/TarefaRepository.ts
+
 import { Tarefa } from '../database/models/Tarefa'
 import type { TarefaCreationAttributes, TarefaAttributes } from '../database/models/Tarefa'
 import type { ModelStatic } from 'sequelize'

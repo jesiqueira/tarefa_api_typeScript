@@ -44,7 +44,6 @@ export class TarefaController implements ITarefaController {
         })
       }
 
-      console.error('Erro ao criar tarefa:', error)
       return res.status(500).json({
         success: false,
         message: 'Erro interno do servidor',
@@ -79,7 +78,6 @@ export class TarefaController implements ITarefaController {
         })
       }
 
-      console.error('Erro ao listar tarefas:', error)
       return res.status(500).json({
         success: false,
         message: 'Erro interno do servidor',
@@ -128,7 +126,6 @@ export class TarefaController implements ITarefaController {
         })
       }
 
-      console.error('Erro ao buscar tarefa:', error)
       return res.status(500).json({
         success: false,
         message: 'Erro interno do servidor',
@@ -187,7 +184,6 @@ export class TarefaController implements ITarefaController {
         })
       }
 
-      console.error('Erro ao atualizar tarefa:', error)
       return res.status(500).json({
         success: false,
         message: 'Erro interno do servidor',
@@ -238,7 +234,6 @@ export class TarefaController implements ITarefaController {
         })
       }
 
-      console.error('Erro ao deletar tarefa:', error)
       return res.status(500).json({
         success: false,
         message: 'Erro interno do servidor',
@@ -277,7 +272,6 @@ export class TarefaController implements ITarefaController {
         })
       }
 
-      console.error('Erro ao buscar tarefas do usuário:', error)
       return res.status(500).json({
         success: false,
         message: 'Erro interno do servidor',
@@ -327,7 +321,6 @@ export class TarefaController implements ITarefaController {
         })
       }
 
-      console.error('Erro ao buscar tarefas por status:', error)
       return res.status(500).json({
         success: false,
         message: 'Erro interno do servidor',

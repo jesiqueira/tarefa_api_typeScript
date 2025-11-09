@@ -19,10 +19,9 @@ export const criarTarefaSchema = z.object({
     .max(1000)
     .optional()
     .nullable()
-    .transform((str) => str?.trim() || undefined || null),
-  usuarioId: z.number().int('ID do usuário deve ser um número inteiro').positive('ID do usuário deve ser positivo'),
+    .transform((str) => str?.trim()),
   status: StatusTarefaEnum.default('pendente'),
-}) satisfies z.ZodType<ICriarTarefaDTO>
+}) satisfies z.ZodType<Omit<ICriarTarefaDTO, 'usuarioId'>>
 
 export const atualizarTarefaSchema: z.ZodType<IAtualizarTarefaDTO> = z
   .object({
@@ -37,7 +36,7 @@ export const atualizarTarefaSchema: z.ZodType<IAtualizarTarefaDTO> = z
       .max(1000)
       .optional()
       .nullable()
-      .transform((str) => str?.trim() || undefined || null)
+      .transform((str) => str?.trim())
       .nullable(),
     status: StatusTarefaEnum.optional(),
   })

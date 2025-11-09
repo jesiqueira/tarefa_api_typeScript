@@ -132,3 +132,5 @@ export class TarefaService implements ITarefaService {
     }
   }
 }
+
+export default TarefaService
