@@ -42,7 +42,12 @@ module.exports = {
     '!src/database/config.ts', // Configurações do DB (sem lógica de execução)
     '!src/database/connection.ts', // Inicialização da conexão (sem lógica)
     '!src/tests/**', // Arquivos de setup do Jest e testes
-    '!src/routes/**/*.ts', // Arquivos de rotas (se apenas rotearem para controllers)
+    '!src/routes/**/*.ts', // EXCLUI ROTAS - CORRETO!
+    '!src/database/models/**/*.ts', // Exclui modelos (apenas definições)
+    '!src/schemas/**/*.ts', // Exclui schemas (apenas validações)
+    '!src/middlewares/interfaces/**/*.ts', // Exclui interfaces
+    '!src/repositories/interfaces/**/*.ts', // Exclui interfaces
+    '!src/controllers/interfaces/**/*.ts', // Exclui interfaces
     '!src/models/**/*.ts', // Arquivos de definição de modelos (entidades/tipos)
     '!**/node_modules/**',
     '!src/__tests__/**', // ← EXCLUI SEUS TESTES
@@ -50,6 +55,16 @@ module.exports = {
     '!src/**/*.d.ts',
     '!src/__tests__/helpers/**',
     '!src/__tests__/factories/**',
+  ],
+
+  // ADICIONE para ignorar declarações de tipos
+  coveragePathIgnorePatterns: [
+    '/node_modules/',
+    '/src/database/models/', // Definições de modelo
+    '/src/schemas/', // Schemas de validação
+    '/src/routes/', // Configuração de rotas
+    '/interfaces/', // Interfaces
+    '\\.d\\.ts$', // Arquivos de definição TypeScript
   ],
   coverageReporters: ['text-summary', 'lcov', 'html'],
 

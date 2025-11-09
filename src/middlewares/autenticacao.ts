@@ -32,6 +32,7 @@ export const autenticar = (req: IAuthRequest, res: Response, next: NextFunction)
     next()
   } catch (error) {
     console.error('Erro na autenticação:', error)
+    console.error('Erro na autenticação:', error) // ⬅️ Já existe
 
     res.status(401).json({
       success: false,

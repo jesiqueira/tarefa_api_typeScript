@@ -7,6 +7,7 @@ import type { IUsuarioService } from './interfaces/IUsuarioService'
 import type { IUsuarioRepository } from '../repositories/interfaces/IUsuarioRepository'
 import type { Usuario } from '../database/models/Usuario'
 import type { UsuarioCreationAttributes } from '../database/models/Usuario'
+import type { ICriarUsuarioDTO, ILoginDTO } from '../schemas/interfaces/IUsuarioSchemas'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 
@@ -31,20 +32,23 @@ export class UsuarioService implements IUsuarioService {
     return await this.usuarioRepository.findAll()
   }
 
-  async criarUsuario(usuarioData: UsuarioCreationAttributes): Promise<Usuario> {
+  async criarUsuario(usuarioData: ICriarUsuarioDTO): Promise<Usuario> {
     const usuarioExistente = await this.usuarioRepository.findByEmail(usuarioData.email)
 
     if (usuarioExistente) {
       throw new EmailEmUsoError()
     }
-    const senhaCriptografada = await this.criptografarSenha(usuarioData.passwordHash)
 
-    const usuarioComSenhaSegura = {
-      ...usuarioData,
-      passwordHash: senhaCriptografada,
+    const senhaCriptografada = await this.criptografarSenha(usuarioData.password)
+
+    // ✅ Converte para o formato do repository
+    const usuarioParaCriar: UsuarioCreationAttributes = {
+      nome: usuarioData.nome,
+      email: usuarioData.email,
+      passwordHash: senhaCriptografada, // ✅ Converte password → passwordHash
     }
 
-    return await this.usuarioRepository.create(usuarioComSenhaSegura)
+    return await this.usuarioRepository.create(usuarioParaCriar)
   }
 
   private async criptografarSenha(senha: string): Promise<string> {
@@ -52,7 +56,7 @@ export class UsuarioService implements IUsuarioService {
     return await bcrypt.hash(senha, saltRounds)
   }
 
-  async login(dados: { email: string; senha: string }): Promise<{ usuario: Usuario; token: string }> {
+  async login(dados: ILoginDTO): Promise<{ usuario: Usuario; token: string }> {
     const usuario = await this.usuarioRepository.findByEmail(dados.email)
 
     if (!usuario) {
@@ -60,22 +64,21 @@ export class UsuarioService implements IUsuarioService {
     }
 
     try {
-      const senhaValida = await this.verificarSenha(dados.senha, usuario.passwordHash)
+      // ✅ CORRIGIDO: Agora usa dados.password (não dados.senha)
+      const senhaValida = await this.verificarSenha(dados.password, usuario.passwordHash)
 
       if (!senhaValida) {
         throw new Error('Credenciais inválidas')
       }
 
       // Gera token JWT
-      const token = jwt.sign({ usuarioId: usuario.id, email: usuario.email }, process.env.JWT_SECRET || 'fallback-secret', { expiresIn: '24h' })
+      const token = jwt.sign({ id: usuario.id, email: usuario.email }, process.env.JWT_SECRET || 'fallback-secret', { expiresIn: '24h' })
 
       return { usuario, token }
     } catch (error) {
-      // Se for erro de verificação de senha, relança como "Credenciais inválidas"
       if (error instanceof Error && error.message.includes('verificar senha')) {
         throw new Error('Credenciais inválidas')
       }
-      // Caso contrário, relança o erro original
       throw error
     }
   }

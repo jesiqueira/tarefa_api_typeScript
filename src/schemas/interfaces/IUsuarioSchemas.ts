@@ -3,12 +3,12 @@
 export interface ICriarUsuarioDTO {
   nome: string
   email: string
-  passwordHash: string
+  password: string
 }
 
 export interface ILoginDTO {
   email: string
-  senha: string
+  password: string
 }
 
 export type IAtualizarUsuarioDTO = {

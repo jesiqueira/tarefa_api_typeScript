@@ -33,7 +33,7 @@ describe('UsuarioController', () => {
         body: {
           nome: 'Novo Usuario',
           email: 'novo@teste.com',
-          passwordHash: 'senha123',
+          password: 'senha123',
         },
       })
 
@@ -62,7 +62,7 @@ describe('UsuarioController', () => {
         body: {
           nome: '',
           email: 'email-invalido',
-          passwordHash: '123',
+          password: '123',
         },
       })
 
@@ -92,7 +92,7 @@ describe('UsuarioController', () => {
         body: {
           nome: 'Novo Usuario',
           email: 'existente@teste.com', // Email já em uso
-          passwordHash: 'senha123',
+          password: 'senha123',
         },
       })
 
@@ -121,7 +121,7 @@ describe('UsuarioController', () => {
       const mockRequest = criarMockRequest({
         body: {
           email: 'login@teste.com',
-          senha: 'senha123',
+          password: 'senha123',
         },
       })
 
@@ -151,7 +151,7 @@ describe('UsuarioController', () => {
       const mockRequest = criarMockRequest({
         body: {
           email: 'usuario@teste.com',
-          senha: 'senha_errada', // Senha incorreta
+          password: 'senha_errada', // Senha incorreta
         },
       })
 
@@ -170,7 +170,7 @@ describe('UsuarioController', () => {
       const mockRequest = criarMockRequest({
         body: {
           email: 'naoexiste@teste.com',
-          senha: 'qualquersenha',
+          password: 'qualquersenha',
         },
       })
 
@@ -189,7 +189,7 @@ describe('UsuarioController', () => {
       const mockRequest = criarMockRequest({
         body: {
           email: 'email-invalido',
-          senha: '', // Senha vazia
+          password: '', // Senha vazia
         },
       })
 

@@ -6,8 +6,8 @@
 import { Usuario } from '../../database/models/Usuario'
 import { UsuarioRepository } from '../../repositories/UsuarioRepository'
 import { UsuarioService } from '../../services/UsuarioService'
-import type { UsuarioCreationAttributes } from '../../database/models/Usuario'
 import { UsuarioNaoEncontradoError, EmailEmUsoError } from '../../errors'
+import type { ICriarUsuarioDTO } from '../../schemas/interfaces/IUsuarioSchemas'
 
 describe('UsuariosService', () => {
   let usuarioService: UsuarioService
@@ -121,10 +121,10 @@ describe('UsuariosService', () => {
     describe('criarUsuario', () => {
       test('deve criar um usuario com dados válidos', async () => {
         // Arrange
-        const usuarioData: UsuarioCreationAttributes = {
+        const usuarioData: ICriarUsuarioDTO = {
           nome: 'Novo Usuário',
           email: 'novo@email.com',
-          passwordHash: 'novo_hash',
+          password: 'novo_hash',
         }
 
         // Act
@@ -145,10 +145,10 @@ describe('UsuariosService', () => {
         // Arrange
         const email = 'duplicado@email.com'
 
-        const usuarioData: UsuarioCreationAttributes = {
+        const usuarioData: ICriarUsuarioDTO = {
           nome: 'Primeiro Usuario',
           email,
-          passwordHash: 'hash1',
+          password: 'hash1',
         }
 
         // Criar o primeiro usuario
@@ -159,17 +159,17 @@ describe('UsuariosService', () => {
           usuarioService.criarUsuario({
             nome: 'Segundo Usuario',
             email,
-            passwordHash: 'hash2',
+            password: 'hash2',
           }),
         ).rejects.toThrow(EmailEmUsoError)
       })
 
       test('deve criar usuario com campos mínimos obrigatórios', async () => {
         // Arrange
-        const usuarioMinimo: UsuarioCreationAttributes = {
+        const usuarioMinimo: ICriarUsuarioDTO = {
           nome: 'Mínimo',
           email: 'minimo@email.com',
-          passwordHash: 'hash_minimo',
+          password: 'hash_minimo',
         }
 
         // Act
@@ -189,7 +189,7 @@ describe('UsuariosService', () => {
         const usuarioCriado = await usuarioService.criarUsuario({
           nome: 'Usuário Teste',
           email: 'teste@email.com',
-          passwordHash: senhaOriginal,
+          password: senhaOriginal,
         })
 
         // Assert
@@ -336,16 +336,16 @@ describe('UsuariosService', () => {
       test('deve fazer login com credenciais válidas', async () => {
         // Arrange
         const email = 'login@email.com'
-        const senha = 'senhaCorreta123'
+        const password = 'senhaCorreta123'
 
         await usuarioService.criarUsuario({
           nome: 'Usuário Login',
           email,
-          passwordHash: senha,
+          password: password,
         })
 
         // Act
-        const resultado = await usuarioService.login({ email, senha })
+        const resultado = await usuarioService.login({ email, password })
 
         // Assert
         expect(resultado.usuario.email).toBe(email)
@@ -357,7 +357,7 @@ describe('UsuariosService', () => {
         // Arrange
         const dadosLogin = {
           email: 'naoexiste@email.com',
-          senha: 'qualquersenha',
+          password: 'qualquersenha',
         }
 
         // Act & Assert
@@ -370,11 +370,11 @@ describe('UsuariosService', () => {
         await usuarioService.criarUsuario({
           nome: 'Usuário Teste',
           email,
-          passwordHash: 'senhaCorreta',
+          password: 'senhaCorreta',
         })
 
         // Act & Assert
-        await expect(usuarioService.login({ email, senha: 'senhaErrada' })).rejects.toThrow('Credenciais inválidas')
+        await expect(usuarioService.login({ email, password: 'senhaErrada' })).rejects.toThrow('Credenciais inválidas')
       })
     })
   })
@@ -439,7 +439,7 @@ describe('UsuariosService', () => {
       const usuarioCriado = await usuarioService.criarUsuario({
         nome: 'Usuário Completo',
         email: 'completo@email.com',
-        passwordHash: 'hash_completo',
+        password: 'hash_completo',
       })
 
       // Find
@@ -466,7 +466,7 @@ describe('UsuariosService', () => {
       const usuario1 = await usuarioService.criarUsuario({
         nome: 'Primeiro Usuário',
         email: 'primeiro@email.com',
-        passwordHash: 'hash1',
+        password: 'hash1',
       })
 
       // Tenta criar segundo com mesmo email - deve falhar
@@ -474,7 +474,7 @@ describe('UsuariosService', () => {
         usuarioService.criarUsuario({
           nome: 'Segundo Usuário',
           email: 'primeiro@email.com',
-          passwordHash: 'hash2',
+          password: 'hash2',
         }),
       ).rejects.toThrow(EmailEmUsoError)
 
@@ -482,7 +482,7 @@ describe('UsuariosService', () => {
       const usuario2 = await usuarioService.criarUsuario({
         nome: 'Segundo Usuário',
         email: 'segundo@email.com',
-        passwordHash: 'hash2',
+        password: 'hash2',
       })
 
       // Tenta atualizar email do usuário1 para email do usuário2 - deve falhar

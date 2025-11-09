@@ -4,7 +4,7 @@
  */
 
 import type { Usuario } from '../../database/models/Usuario'
-import type { UsuarioCreationAttributes } from '../../database/models/Usuario'
+import type { ICriarUsuarioDTO, ILoginDTO } from '../../schemas/interfaces/IUsuarioSchemas'
 
 export interface IUsuarioService {
   /**
@@ -25,17 +25,17 @@ export interface IUsuarioService {
   /**
    * Criar um novo usuário
    */
-  criarUsuario(usuarioData: UsuarioCreationAttributes): Promise<Usuario>
+  criarUsuario(usuarioData: ICriarUsuarioDTO): Promise<Usuario>
 
   /**
    * Realizar login
    */
-  login(dados: { email: string; senha: string }): Promise<{ usuario: Usuario; token: string }>
+  login(dados: ILoginDTO): Promise<{ usuario: Usuario; token: string }>
 
   /**
    * Atualizar um usuário existente
    */
-  atualizarUsuario(id: number, usuarioData: Partial<UsuarioCreationAttributes>): Promise<Usuario>
+  atualizarUsuario(id: number, usuarioData: Partial<ICriarUsuarioDTO>): Promise<Usuario>
 
   /**
    * Deletar um usuário

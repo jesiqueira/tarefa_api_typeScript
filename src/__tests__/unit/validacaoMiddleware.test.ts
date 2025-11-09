@@ -32,7 +32,7 @@ describe('Middlewares de Validação', () => {
           body: {
             nome: 'João Silva',
             email: 'joao@email.com',
-            passwordHash: 'senhaSegura123',
+            password: 'senhaSegura123',
           },
         })
 
@@ -51,7 +51,7 @@ describe('Middlewares de Validação', () => {
           body: {
             nome: '  João Silva  ', // Espaços extras
             email: 'JOAO@EMAIL.COM', // Maiúsculas
-            passwordHash: 'senha123',
+            password: 'senha123',
           },
         })
 
@@ -70,7 +70,7 @@ describe('Middlewares de Validação', () => {
           body: {
             nome: '', // Nome vazio
             email: 'email-invalido', // Email inválido
-            passwordHash: '123', // Senha muito curta
+            password: '123', // Senha muito curta
           },
         })
 
@@ -91,7 +91,7 @@ describe('Middlewares de Validação', () => {
               mensagem: 'Email inválido',
             }),
             expect.objectContaining({
-              campo: 'passwordHash',
+              campo: 'password',
               mensagem: 'Senha deve ter pelo menos 6 caracteres',
             }),
           ]),
@@ -107,7 +107,7 @@ describe('Middlewares de Validação', () => {
         const mockReq = criarMockRequest({
           body: {
             email: 'usuario@email.com',
-            senha: 'minhaSenha123',
+            password: 'minhaSenha123',
           },
         })
 
@@ -125,7 +125,7 @@ describe('Middlewares de Validação', () => {
         const mockReq = criarMockRequest({
           body: {
             email: 'email-invalido',
-            senha: '', // Senha vazia
+            password: '', // Senha vazia
           },
         })
 
@@ -142,7 +142,7 @@ describe('Middlewares de Validação', () => {
               mensagem: 'Email inválido',
             }),
             expect.objectContaining({
-              campo: 'senha',
+              campo: 'password',
               mensagem: 'Senha é Obrigatória',
             }),
           ]),
@@ -393,7 +393,7 @@ describe('Middlewares de Validação', () => {
         body: {
           nome: 'Teste',
           email: 'teste@email.com',
-          passwordHash: 'senha123',
+          password: 'senha123',
         },
       })
 

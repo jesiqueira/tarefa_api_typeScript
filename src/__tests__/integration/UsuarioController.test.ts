@@ -36,7 +36,7 @@ describe('UsuarioController', () => {
         body: {
           nome: 'João Silva',
           email: 'joao@email.com',
-          passwordHash: 'senhaSegura123',
+          password: 'senhaSegura123',
         },
       })
 
@@ -75,7 +75,7 @@ describe('UsuarioController', () => {
         body: {
           nome: 'Novo Usuário',
           email: 'existente@email.com',
-          passwordHash: 'outrasenha',
+          password: 'outrasenha',
         },
       })
 
@@ -133,7 +133,7 @@ describe('UsuarioController', () => {
       const mockReq = criarMockRequest({
         body: {
           email: 'login@email.com',
-          senha: senhaTeste,
+          password: senhaTeste,
         },
       })
 
@@ -167,7 +167,7 @@ describe('UsuarioController', () => {
       const mockReq = criarMockRequest({
         body: {
           email: 'login@email.com',
-          senha: 'senha_errada',
+          password: 'senha_errada',
         },
       })
 
@@ -515,7 +515,7 @@ describe('UsuarioController', () => {
         body: {
           nome: 'Teste',
           email: 'teste@email.com',
-          passwordHash: 'senha123',
+          password: 'senha123',
         },
       })
       const mockRes = criarMockResponse()

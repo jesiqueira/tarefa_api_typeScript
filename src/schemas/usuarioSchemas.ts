@@ -15,12 +15,12 @@ export const criarUsuarioSchema = z.object({
     .email('Email inválido')
     .max(255)
     .transform((str) => str.toLowerCase().trim()),
-  passwordHash: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres').max(255),
+  password: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres').max(255),
 }) satisfies z.ZodType<ICriarUsuarioDTO>
 
 export const loginSchema = z.object({
   email: z.email('Email inválido').transform((str) => str.toLowerCase().trim()),
-  senha: z.string().min(1, 'Senha é Obrigatória'),
+  password: z.string().min(1, 'Senha é Obrigatória'),
 }) satisfies z.ZodType<ILoginDTO>
 
 export const atualizarUsuarioSchema: z.ZodType<IAtualizarUsuarioDTO> = z
