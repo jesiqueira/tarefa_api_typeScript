@@ -1,8 +1,16 @@
 import express from 'express'
 import type { Request, Response, NextFunction } from 'express'
 import cors from 'cors'
+// ⬇️ Imports do Swagger
+import swaggerUi from 'swagger-ui-express'
+import YAML from 'yamljs'
+import path from 'path' // Para garantir o caminho correto do YAML
+
 import usuarioRoutes from './routes/usuario.routes'
 import tarefaRoutes from './routes/tarefa.routes'
+
+// ⬇️ Carregar o arquivo YAML
+const swaggerDocument = YAML.load(path.join(__dirname, '..', 'swagger.yaml'))
 
 interface HttpError extends Error {
   status?: number
@@ -22,6 +30,9 @@ app.use(
 )
 
 app.use(express.json())
+
+// Rota de Documentação
+app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument))
 
 // Import e uso de Rotas
 app.use('/api/usuarios', usuarioRoutes)
