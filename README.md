@@ -214,7 +214,7 @@ npm run dev          # Desenvolvimento com hot-reload
 npm run build        # Build para produção
 npm run start        # Produção
 npm run lint         # Verificação de código
-nom run lint:fix     # correção com lint
+npm run lint:fix     # correção com lint
 npm run test         # test com jest
 ```
 # Adicionando novas rotas
@@ -222,6 +222,16 @@ npm run test         # test com jest
 2. Adicione a rota em src/routes/
 3. Implemente o controller em src/controllers/
 4. Atualize a documentação no swagger.yaml
+
+# 🔄 Git Workflow
+### Este projeto segue o Git Flow para organização do código:
+
+- `main` - Produção
+- `develop` - Desenvolvimento
+- `feature/*` - Novas funcionalidades
+- `hotfix/*` - Correções urgentes
+
+**Padrão de commits:** feat, fix, docs, style, refactor, test
 
 # 🤝 Contribuindo
 1. Fork o projeto
