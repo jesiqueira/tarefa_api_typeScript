@@ -12,6 +12,7 @@ import databaseConfig from './config'
 // 📁 MODELOS - IMPORTE SEUS MODELOS AQUI
 // =======================================================
 import { Usuario } from './models/Usuario'
+import { Tarefa } from './models/Tarefa'
 
 // =======================================================
 // Tipagem auxiliar: qualquer Model que possa ter associate()
@@ -37,6 +38,7 @@ export const sequelize = new Sequelize(config)
 
 // EXEMPLOS (descomente e adapte):
 Usuario.initModel(sequelize)
+Tarefa.initModel(sequelize)
 
 // =======================================================
 // 4. Define associações automaticamente
