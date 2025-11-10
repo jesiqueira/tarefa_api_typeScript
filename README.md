@@ -33,7 +33,7 @@ Uma API RESTful moderna para gestão de tarefas e usuários, desenvolvida em Typ
 
 1. **Clone o repositório:**
 ```bash
-git clone <url-do-repositorio>
+git clone https://github.com/jesiqueira/tarefa_api_typeScript
 cd tarefa_api_typeScript
 ```
 2. **Configure as variáveis de ambiente:**
