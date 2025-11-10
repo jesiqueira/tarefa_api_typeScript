@@ -63,20 +63,38 @@ npm run dev
 ```
 ## 📁 Estrutura do Projeto
 
-```test
+```text
 tarefa_api_typeScript/
-├── src/
-│   ├── controllers/     # Lógica dos endpoints
-│   ├── services/        # Regras de negócio
-│   ├── repositories/    # Acesso ao banco de dados
-│   ├── models/          # Modelos do Sequelize
-│   ├── routes/          # Definição das rotas
-│   ├── middlewares/     # Autenticação e validação
-│   ├── schemas/         # Schemas de validação
-│   └── database/        # Configuração do banco
-├── docs/               # Documentação
-├── docker-compose.yml  # Orquestração de containers
-└── Dockerfile         # Build da aplicação
+├── 📂 src/
+│ ├── 📂 tests/ # Testes automatizados (Jest + Supertest)
+│ ├── 📂 controllers/ # Controladores - lidam com requests/responses HTTP
+│ ├── 📂 database/ # Models do Sequelize e configuração do DB
+│ ├── 📂 errors/ # Erros customizados da aplicação
+│ ├── 📂 factories/ # Factories para criar dados de teste
+│ ├── 📂 middlewares/ # Autenticação JWT, validação Zod, etc.
+│ ├── 📂 repositories/ # Camada de acesso a dados (Sequelize)
+│ ├── 📂 routes/ # Definição de rotas Express
+│ ├── 📂 schemas/ # Schemas de validação com Zod
+│ ├── 📂 services/ # Lógica de negócio da aplicação
+│ ├── 📂 tests/ # Configurações e helpers de teste
+│ ├── 📂 utils/ # Funções utilitárias e helpers
+│ ├── 📄 app.ts # Configuração do Express e middlewares
+│ └── 📄 server.ts # Inicialização do servidor
+│
+├── ⚙️ Arquivos de Configuração:
+│ ├── 🔧 .dockerignore # Exclusões para Docker
+│ ├── 🔧 .editorconfig # Padrões de código
+│ ├── 🔧 .env # Variáveis de ambiente
+│ ├── 🔧 .prettierrc # Formatação de código
+│ ├── 🔧 docker-compose.yml # Serviços Docker
+│ ├── 🔧 eslint.config.mjs # Regras ESLint
+│ ├── 🔧 jest.config.js # Configuração de testes
+│ ├── 🔧 swagger.yaml # Documentação OpenAPI
+│ └── 🔧 tsconfig.json # Configuração TypeScript
+│
+├── 📄 package.json # Dependências e scripts npm
+├── 📄 LICENSE # Licença MIT
+└── 📄 README.md # Este arquivo
 ```
 ## 🔌 Endpoints da API
 
