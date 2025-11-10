@@ -22,5 +22,7 @@
     "forceConsistentCasingInFileNames": true, // Boa prática
     "sourceMap": true, // Útil para debug
     "declaration": true // Gera arquivos .d.ts
-  }
+  },
+  "include": ["src/**/*"],
+  "exclude": ["src/**/*.test.ts", "src/**/*.spec.ts", "node_modules", "dist", "__tests__", "coverage"]
 }
