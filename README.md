@@ -11,13 +11,14 @@ Uma API RESTful moderna para gestão de tarefas e usuários, desenvolvida em Typ
 - **🐳 Docker** - Containerização para desenvolvimento e produção
 - **🧪 TypeScript** - Código tipado e mais seguro
 - **🛡️ CORS** - Configuração de segurança para frontends
-- **✅ Validação** - Schemas de validação com Joi/Yup
+- **✅ Validação** - Schemas de validação com Zod
 
 ## 🛠️ Tecnologias
 
 - **Backend:** Node.js, Express.js, TypeScript
 - **Banco de Dados:** PostgreSQL, Sequelize ORM
 - **Autenticação:** JWT (JSON Web Tokens)
+- **Validação:** Zod - Schema validation
 - **Documentação:** Swagger/OpenAPI 3.0
 - **Containerização:** Docker, Docker Compose
 - **Ferramentas:** PgAdmin, CORS, Bcrypt
@@ -218,7 +219,7 @@ npm run lint:fix     # correção com lint
 npm run test         # test com jest
 ```
 # Adicionando novas rotas
-1. Crie o schema de validação em src/schemas/
+1. Crie o schema de validação em src/schemas/ usando Zod
 2. Adicione a rota em src/routes/
 3. Implemente o controller em src/controllers/
 4. Atualize a documentação no swagger.yaml
